@@ -2091,7 +2091,7 @@
     (pin "1" (uuid a877695b-a8ee-4537-9d23-c83f33d12d48))
     (pin "2" (uuid 2d4625b7-3c1c-417b-acf0-df5f19707c49))
     (instances
-      (project "epd_remote"
+      (project "pmic_dev"
         (path "/04706eb9-2bc4-42ee-95fb-1daba0e75bf5"
           (reference "C?") (unit 1)
         )
@@ -2119,7 +2119,7 @@
     )
     (pin "1" (uuid e0105ffe-174c-4044-a67d-35f3cd56b534))
     (instances
-      (project "epd_remote"
+      (project "pmic_dev"
         (path "/04706eb9-2bc4-42ee-95fb-1daba0e75bf5"
           (reference "#PWR?") (unit 1)
         )
@@ -2156,7 +2156,7 @@
     (pin "8" (uuid bb2f584c-577e-4e6e-a4d2-c5936888a80c))
     (pin "9" (uuid 6e4d8fcd-d148-44dd-9ef6-fe54938b1332))
     (instances
-      (project "epd_remote"
+      (project "pmic_dev"
         (path "/04706eb9-2bc4-42ee-95fb-1daba0e75bf5"
           (reference "J?") (unit 1)
         )
@@ -2189,7 +2189,7 @@
     (pin "5" (uuid 54998ead-b04f-4b7a-a17e-eaf5ef8d2961))
     (pin "6" (uuid f7734134-3db1-4259-adff-bd4aa5b7b1bc))
     (instances
-      (project "epd_remote"
+      (project "pmic_dev"
         (path "/04706eb9-2bc4-42ee-95fb-1daba0e75bf5"
           (reference "J?") (unit 1)
         )
@@ -2217,7 +2217,7 @@
     )
     (pin "1" (uuid 2bc60a6a-6598-4ba6-a441-4b3c6c73bde7))
     (instances
-      (project "epd_remote"
+      (project "pmic_dev"
         (path "/04706eb9-2bc4-42ee-95fb-1daba0e75bf5"
           (reference "#PWR?") (unit 1)
         )
@@ -2245,7 +2245,7 @@
     )
     (pin "1" (uuid 021ce3d3-84da-4f20-a934-8ed8a08d404b))
     (instances
-      (project "epd_remote"
+      (project "pmic_dev"
         (path "/04706eb9-2bc4-42ee-95fb-1daba0e75bf5"
           (reference "#PWR?") (unit 1)
         )
@@ -2273,7 +2273,7 @@
     )
     (pin "1" (uuid c14918d1-35ee-47a8-97f2-f5147a16772b))
     (instances
-      (project "epd_remote"
+      (project "pmic_dev"
         (path "/04706eb9-2bc4-42ee-95fb-1daba0e75bf5"
           (reference "#PWR?") (unit 1)
         )
@@ -2301,7 +2301,7 @@
     )
     (pin "1" (uuid 876c6b37-b900-4d6a-aa5d-716f26d5cad3))
     (instances
-      (project "epd_remote"
+      (project "pmic_dev"
         (path "/04706eb9-2bc4-42ee-95fb-1daba0e75bf5"
           (reference "#PWR?") (unit 1)
         )
@@ -2338,7 +2338,7 @@
     (pin "8" (uuid d9d14671-46fb-44db-861c-b246e45cf8bc))
     (pin "9" (uuid 89fc9152-e7f9-4d26-9f63-cd20dcdda301))
     (instances
-      (project "epd_remote"
+      (project "pmic_dev"
         (path "/04706eb9-2bc4-42ee-95fb-1daba0e75bf5"
           (reference "J?") (unit 1)
         )
@@ -2367,7 +2367,7 @@
     (pin "1" (uuid 91d1b103-c115-4f9c-b47c-4ddbf83a74b9))
     (pin "2" (uuid 8d23d38e-113a-4e8c-ab39-7061dc9735da))
     (instances
-      (project "epd_remote"
+      (project "pmic_dev"
         (path "/04706eb9-2bc4-42ee-95fb-1daba0e75bf5"
           (reference "C?") (unit 1)
         )
@@ -2395,7 +2395,7 @@
     )
     (pin "1" (uuid 9c75e68a-1e53-43d0-b879-7d762a4bfaf4))
     (instances
-      (project "epd_remote"
+      (project "pmic_dev"
         (path "/04706eb9-2bc4-42ee-95fb-1daba0e75bf5"
           (reference "#PWR?") (unit 1)
         )
@@ -2423,7 +2423,7 @@
     )
     (pin "1" (uuid a5379479-8a12-4aa7-9017-9648088b858f))
     (instances
-      (project "epd_remote"
+      (project "pmic_dev"
         (path "/04706eb9-2bc4-42ee-95fb-1daba0e75bf5"
           (reference "#PWR?") (unit 1)
         )
@@ -2451,7 +2451,7 @@
     )
     (pin "1" (uuid 8d3cc0ad-4b6e-48e2-aef7-3c7a322fc097))
     (instances
-      (project "epd_remote"
+      (project "pmic_dev"
         (path "/04706eb9-2bc4-42ee-95fb-1daba0e75bf5"
           (reference "#PWR?") (unit 1)
         )
@@ -2479,7 +2479,7 @@
     )
     (pin "1" (uuid cc065905-0fcc-4bb9-b469-60f9adbabbaa))
     (instances
-      (project "epd_remote"
+      (project "pmic_dev"
         (path "/04706eb9-2bc4-42ee-95fb-1daba0e75bf5"
           (reference "#PWR?") (unit 1)
         )
@@ -2525,7 +2525,7 @@
     (pin "3" (uuid 9f2f207d-25fb-47b6-8fa5-d65f9120c0a2))
     (pin "4" (uuid fb9d4d65-41d3-4d20-9192-591c0ed27676))
     (instances
-      (project "epd_remote"
+      (project "pmic_dev"
         (path "/04706eb9-2bc4-42ee-95fb-1daba0e75bf5/81e2aec6-26e4-45ea-8303-27769d9b2f1d"
           (reference "LED1") (unit 1)
         )
@@ -2550,7 +2550,7 @@
     )
     (pin "1" (uuid b03fce70-0d6e-4fec-ae90-25daf75204dc))
     (instances
-      (project "epd_remote"
+      (project "pmic_dev"
         (path "/04706eb9-2bc4-42ee-95fb-1daba0e75bf5"
           (reference "#PWR?") (unit 1)
         )
@@ -2609,7 +2609,7 @@
     (pin "8" (uuid 6da02049-d8aa-4b2a-8b23-4645345b7f3f))
     (pin "9" (uuid 51a4ef89-3924-46f9-b995-de681c10229d))
     (instances
-      (project "epd_remote"
+      (project "pmic_dev"
         (path "/04706eb9-2bc4-42ee-95fb-1daba0e75bf5"
           (reference "U?") (unit 1)
         )
@@ -2638,7 +2638,7 @@
     (pin "1" (uuid 304ef39c-94a5-44ff-b5d2-eb595ab7bd94))
     (pin "2" (uuid 24a9b2f9-cd0c-4a39-a730-83cbe687da45))
     (instances
-      (project "epd_remote"
+      (project "pmic_dev"
         (path "/04706eb9-2bc4-42ee-95fb-1daba0e75bf5"
           (reference "C?") (unit 1)
         )
@@ -2667,7 +2667,7 @@
     (pin "1" (uuid 9716a7ad-4bef-49ca-9d6b-57e48c12775b))
     (pin "2" (uuid f5a32991-c202-4faa-9638-78ea17e1e0e6))
     (instances
-      (project "epd_remote"
+      (project "pmic_dev"
         (path "/04706eb9-2bc4-42ee-95fb-1daba0e75bf5"
           (reference "R?") (unit 1)
         )
@@ -2695,7 +2695,7 @@
     )
     (pin "1" (uuid a82f5cf0-1486-4c28-979a-4c8b3b428fae))
     (instances
-      (project "epd_remote"
+      (project "pmic_dev"
         (path "/04706eb9-2bc4-42ee-95fb-1daba0e75bf5"
           (reference "#PWR?") (unit 1)
         )
@@ -2723,7 +2723,7 @@
     )
     (pin "1" (uuid cdb47233-1fe2-414a-b827-08b58287e68e))
     (instances
-      (project "epd_remote"
+      (project "pmic_dev"
         (path "/04706eb9-2bc4-42ee-95fb-1daba0e75bf5"
           (reference "#PWR?") (unit 1)
         )
@@ -2760,7 +2760,7 @@
     (pin "8" (uuid 5f6f12d8-c6a8-410a-a04e-a92e090f2874))
     (pin "9" (uuid 71837451-78ac-4807-871f-b25d0b55f6d0))
     (instances
-      (project "epd_remote"
+      (project "pmic_dev"
         (path "/04706eb9-2bc4-42ee-95fb-1daba0e75bf5"
           (reference "J?") (unit 1)
         )
@@ -2789,7 +2789,7 @@
     (pin "1" (uuid 16db0eca-6284-466d-a13c-0eddebd9b1df))
     (pin "2" (uuid 01a806ba-51a7-4641-bd2a-d4734338bb98))
     (instances
-      (project "epd_remote"
+      (project "pmic_dev"
         (path "/04706eb9-2bc4-42ee-95fb-1daba0e75bf5"
           (reference "C?") (unit 1)
         )
@@ -2817,7 +2817,7 @@
     )
     (pin "1" (uuid a595549e-220a-4b9f-854b-5d09161f7a58))
     (instances
-      (project "epd_remote"
+      (project "pmic_dev"
         (path "/04706eb9-2bc4-42ee-95fb-1daba0e75bf5"
           (reference "#PWR?") (unit 1)
         )
@@ -2845,7 +2845,7 @@
     )
     (pin "1" (uuid bef95987-f332-429c-b202-d82e0cb9408d))
     (instances
-      (project "epd_remote"
+      (project "pmic_dev"
         (path "/04706eb9-2bc4-42ee-95fb-1daba0e75bf5"
           (reference "#PWR?") (unit 1)
         )
@@ -2874,7 +2874,7 @@
     (pin "1" (uuid e934d468-f7c2-432e-b9eb-2ce9a940cf76))
     (pin "2" (uuid e3e8ded8-d348-4d18-8ac2-476115b82d50))
     (instances
-      (project "epd_remote"
+      (project "pmic_dev"
         (path "/04706eb9-2bc4-42ee-95fb-1daba0e75bf5"
           (reference "L?") (unit 1)
         )
@@ -2902,7 +2902,7 @@
     )
     (pin "1" (uuid 5599022d-a85e-48c6-94fd-9ade409a8e64))
     (instances
-      (project "epd_remote"
+      (project "pmic_dev"
         (path "/04706eb9-2bc4-42ee-95fb-1daba0e75bf5"
           (reference "#PWR?") (unit 1)
         )
@@ -2931,7 +2931,7 @@
     (pin "1" (uuid 6ccdd822-9d35-4e8e-bcfc-00bd3c5c6ceb))
     (pin "2" (uuid 2d623e79-4f19-4990-ba9e-e819bff80935))
     (instances
-      (project "epd_remote"
+      (project "pmic_dev"
         (path "/04706eb9-2bc4-42ee-95fb-1daba0e75bf5"
           (reference "R?") (unit 1)
         )
@@ -2960,7 +2960,7 @@
     (pin "1" (uuid b47ca9fc-05a2-4e80-b606-312c5b5da6ff))
     (pin "2" (uuid f8f64020-bc7a-456d-8ed1-3495702373f6))
     (instances
-      (project "epd_remote"
+      (project "pmic_dev"
         (path "/04706eb9-2bc4-42ee-95fb-1daba0e75bf5"
           (reference "R?") (unit 1)
         )
@@ -2990,7 +2990,7 @@
     (pin "2" (uuid b12d754d-ecc1-46ef-b4a0-cba4540c17d6))
     (pin "3" (uuid 82853118-34fd-4fb0-8d80-f4d4a16c87b7))
     (instances
-      (project "epd_remote"
+      (project "pmic_dev"
         (path "/04706eb9-2bc4-42ee-95fb-1daba0e75bf5"
           (reference "Q?") (unit 1)
         )
@@ -3019,7 +3019,7 @@
     (pin "1" (uuid 1c3e33e5-de88-423d-bcc6-b30094665392))
     (pin "2" (uuid 52c113ff-f4af-4941-b222-e3345f6f9183))
     (instances
-      (project "epd_remote"
+      (project "pmic_dev"
         (path "/04706eb9-2bc4-42ee-95fb-1daba0e75bf5"
           (reference "C?") (unit 1)
         )
@@ -3047,7 +3047,7 @@
     )
     (pin "1" (uuid dc780c3e-7f9f-47aa-b376-3b624235cbd0))
     (instances
-      (project "epd_remote"
+      (project "pmic_dev"
         (path "/04706eb9-2bc4-42ee-95fb-1daba0e75bf5"
           (reference "#PWR?") (unit 1)
         )
@@ -3080,7 +3080,7 @@
     (pin "5" (uuid eaaba8f1-e046-4d75-9723-b7e4b88d188a))
     (pin "6" (uuid 5c06f83c-5400-4412-934e-abcc24a334e1))
     (instances
-      (project "epd_remote"
+      (project "pmic_dev"
         (path "/04706eb9-2bc4-42ee-95fb-1daba0e75bf5"
           (reference "BD?") (unit 1)
         )
@@ -3109,7 +3109,7 @@
     (pin "1" (uuid 23ed4372-2fc7-4a0b-a278-efa8d34e869a))
     (pin "2" (uuid d91195cb-540f-4602-8fc8-4b27fcb120d7))
     (instances
-      (project "epd_remote"
+      (project "pmic_dev"
         (path "/04706eb9-2bc4-42ee-95fb-1daba0e75bf5"
           (reference "SW?") (unit 1)
         )
@@ -3137,7 +3137,7 @@
     )
     (pin "1" (uuid 40d776a2-e145-4e76-8c36-7f5e07f55321))
     (instances
-      (project "epd_remote"
+      (project "pmic_dev"
         (path "/04706eb9-2bc4-42ee-95fb-1daba0e75bf5"
           (reference "#PWR?") (unit 1)
         )
@@ -3166,7 +3166,7 @@
     (pin "1" (uuid 11d0550b-cac6-46c8-a852-3bc0485e9ba8))
     (pin "2" (uuid 40db7eb6-e357-4922-b50a-e3c3a739ec49))
     (instances
-      (project "epd_remote"
+      (project "pmic_dev"
         (path "/04706eb9-2bc4-42ee-95fb-1daba0e75bf5"
           (reference "R?") (unit 1)
         )
@@ -3195,7 +3195,7 @@
     (pin "1" (uuid 7f74081c-4931-4993-b007-87494cacc414))
     (pin "2" (uuid a5e7c76c-2489-40c6-9f80-5fa65d1f4668))
     (instances
-      (project "epd_remote"
+      (project "pmic_dev"
         (path "/04706eb9-2bc4-42ee-95fb-1daba0e75bf5"
           (reference "BT?") (unit 1)
         )
@@ -3223,7 +3223,7 @@
     )
     (pin "1" (uuid 7738ef2b-ffdd-4b34-8568-27a53cecf02d))
     (instances
-      (project "epd_remote"
+      (project "pmic_dev"
         (path "/04706eb9-2bc4-42ee-95fb-1daba0e75bf5"
           (reference "#PWR?") (unit 1)
         )
@@ -3251,7 +3251,7 @@
     )
     (pin "1" (uuid 86d74f7a-8c46-40da-8b0b-e0e04461cdb2))
     (instances
-      (project "epd_remote"
+      (project "pmic_dev"
         (path "/04706eb9-2bc4-42ee-95fb-1daba0e75bf5"
           (reference "#PWR?") (unit 1)
         )
@@ -3280,7 +3280,7 @@
     (pin "1" (uuid e9771ca4-f3c2-4a39-87ed-9f366ead2f88))
     (pin "2" (uuid 64a550a0-d2ee-40e3-a476-de4ca54ede96))
     (instances
-      (project "epd_remote"
+      (project "pmic_dev"
         (path "/04706eb9-2bc4-42ee-95fb-1daba0e75bf5"
           (reference "R?") (unit 1)
         )
@@ -3308,7 +3308,7 @@
     )
     (pin "1" (uuid 717b6e90-bb4c-4a45-b2f9-74a34f37000b))
     (instances
-      (project "epd_remote"
+      (project "pmic_dev"
         (path "/04706eb9-2bc4-42ee-95fb-1daba0e75bf5"
           (reference "#PWR?") (unit 1)
         )
@@ -3336,7 +3336,7 @@
     )
     (pin "1" (uuid 9556c4d1-f073-4d28-bd1f-96f2b0cea5f4))
     (instances
-      (project "epd_remote"
+      (project "pmic_dev"
         (path "/04706eb9-2bc4-42ee-95fb-1daba0e75bf5"
           (reference "#PWR?") (unit 1)
         )
@@ -3365,7 +3365,7 @@
     (pin "1" (uuid 85fb5b26-11a7-4bab-b72f-9f03f70850c4))
     (pin "2" (uuid f6416c68-b2a3-4521-8ca7-1dbdd42ab1e2))
     (instances
-      (project "epd_remote"
+      (project "pmic_dev"
         (path "/04706eb9-2bc4-42ee-95fb-1daba0e75bf5"
           (reference "C?") (unit 1)
         )
@@ -3394,7 +3394,7 @@
     (pin "1" (uuid 8425ee75-79b8-4fd0-8fe4-87eb9a29f3d5))
     (pin "2" (uuid 29cfc764-987c-4c25-a937-0d8ef17c614e))
     (instances
-      (project "epd_remote"
+      (project "pmic_dev"
         (path "/04706eb9-2bc4-42ee-95fb-1daba0e75bf5"
           (reference "SW?") (unit 1)
         )
@@ -3422,7 +3422,7 @@
     )
     (pin "1" (uuid b4af75a4-7d22-43ab-9d77-b3bbe866559a))
     (instances
-      (project "epd_remote"
+      (project "pmic_dev"
         (path "/04706eb9-2bc4-42ee-95fb-1daba0e75bf5"
           (reference "#PWR?") (unit 1)
         )
@@ -3451,7 +3451,7 @@
     (pin "1" (uuid c22ea213-f548-481c-950f-6eb7d89ee218))
     (pin "2" (uuid 0522860c-3b52-4476-a147-b2ea6ee45e22))
     (instances
-      (project "epd_remote"
+      (project "pmic_dev"
         (path "/04706eb9-2bc4-42ee-95fb-1daba0e75bf5"
           (reference "R?") (unit 1)
         )
@@ -3479,7 +3479,7 @@
     )
     (pin "1" (uuid a4ea8e7d-7932-4f27-8138-230396b34eae))
     (instances
-      (project "epd_remote"
+      (project "pmic_dev"
         (path "/04706eb9-2bc4-42ee-95fb-1daba0e75bf5"
           (reference "#PWR?") (unit 1)
         )
@@ -3508,7 +3508,7 @@
     (pin "1" (uuid 2794368e-ac3e-4d35-8bff-5a056ac61d2e))
     (pin "2" (uuid c828a14f-a54e-4311-b80b-b8bd1bfe25fd))
     (instances
-      (project "epd_remote"
+      (project "pmic_dev"
         (path "/04706eb9-2bc4-42ee-95fb-1daba0e75bf5"
           (reference "R?") (unit 1)
         )

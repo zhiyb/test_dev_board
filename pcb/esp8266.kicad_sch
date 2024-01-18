@@ -608,7 +608,7 @@
     (pin "2" (uuid a46d0f8b-6d62-42ad-95db-89a446760b92))
     (pin "3" (uuid 6eb0a260-5994-46d1-8375-34bc37409fa3))
     (instances
-      (project "epd_remote"
+      (project "pmic_dev"
         (path "/04706eb9-2bc4-42ee-95fb-1daba0e75bf5"
           (reference "Q?") (unit 1)
         )
@@ -638,7 +638,7 @@
     (pin "2" (uuid d3e9ca12-3958-4754-accb-f094745600ff))
     (pin "3" (uuid a71633b7-1525-4249-8d6a-ff38536f2fe5))
     (instances
-      (project "epd_remote"
+      (project "pmic_dev"
         (path "/04706eb9-2bc4-42ee-95fb-1daba0e75bf5"
           (reference "Q?") (unit 1)
         )
@@ -668,7 +668,7 @@
     (pin "2" (uuid 313853bf-cada-4fa1-9a2c-b9ea5800f0ce))
     (pin "3" (uuid d2ee69cc-d967-48e2-aba1-16cc5c35a02b))
     (instances
-      (project "epd_remote"
+      (project "pmic_dev"
         (path "/04706eb9-2bc4-42ee-95fb-1daba0e75bf5"
           (reference "Q?") (unit 1)
         )
@@ -697,7 +697,7 @@
     (pin "1" (uuid 7c7a4b46-2e9c-4870-beca-2c45aefc59aa))
     (pin "2" (uuid 69411991-e1d8-40a6-bc58-dfca0acae59e))
     (instances
-      (project "epd_remote"
+      (project "pmic_dev"
         (path "/04706eb9-2bc4-42ee-95fb-1daba0e75bf5"
           (reference "R?") (unit 1)
         )
@@ -730,7 +730,7 @@
     (pin "2" (uuid 1a109129-d5c2-4a22-93f6-e905528be81f))
     (pin "3" (uuid 0e5c7de2-57ad-4fc6-9c85-22133b3aa95b))
     (instances
-      (project "epd_remote"
+      (project "pmic_dev"
         (path "/04706eb9-2bc4-42ee-95fb-1daba0e75bf5"
           (reference "Q?") (unit 1)
         )
@@ -758,7 +758,7 @@
     )
     (pin "1" (uuid 941efcca-b357-4503-a6d8-0165900d979b))
     (instances
-      (project "epd_remote"
+      (project "pmic_dev"
         (path "/04706eb9-2bc4-42ee-95fb-1daba0e75bf5"
           (reference "#PWR?") (unit 1)
         )
@@ -787,7 +787,7 @@
     (pin "1" (uuid 8062a057-a78c-4846-8ff5-14980ca1233c))
     (pin "2" (uuid fd75f451-f007-4267-a4ca-1fc97e38ea46))
     (instances
-      (project "epd_remote"
+      (project "pmic_dev"
         (path "/04706eb9-2bc4-42ee-95fb-1daba0e75bf5"
           (reference "R?") (unit 1)
         )
@@ -804,7 +804,7 @@
   (symbol (lib_id "MCU_Module:WeMos_D1_mini") (at 111.76 88.9 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid e3f7095a-90c7-417c-a006-4844a4fa2300)
-    (property "Reference" "U?" (at 113.9541 109.22 0)
+    (property "Reference" "U2" (at 113.9541 109.22 0)
       (effects (font (size 1.27 1.27)) (justify left))
     )
     (property "Value" "WeMos_D1_mini" (at 113.9541 111.76 0)
@@ -833,7 +833,7 @@
     (pin "8" (uuid bd7be804-128e-49ec-8354-84a9e6c690e2))
     (pin "9" (uuid 748c0fe3-06a1-449d-a339-a92c7532173d))
     (instances
-      (project "epd_remote"
+      (project "pmic_dev"
         (path "/04706eb9-2bc4-42ee-95fb-1daba0e75bf5/675a3adb-96b0-4219-9b8c-cc81bff2dadf"
           (reference "U2") (unit 1)
         )
@@ -844,7 +844,7 @@
   (symbol (lib_id "power:GND") (at 111.76 111.76 0) (unit 1)
     (in_bom yes) (on_board yes) (dnp no) (fields_autoplaced)
     (uuid e4aadc72-e961-4b27-88ae-f9e6a3d6eedb)
-    (property "Reference" "#PWR?" (at 111.76 118.11 0)
+    (property "Reference" "#PWR034" (at 111.76 118.11 0)
       (effects (font (size 1.27 1.27)) hide)
     )
     (property "Value" "GND" (at 111.76 116.84 0)
@@ -858,7 +858,7 @@
     )
     (pin "1" (uuid 203c8271-0175-4ae9-9ed0-17ae7c5cb861))
     (instances
-      (project "epd_remote"
+      (project "pmic_dev"
         (path "/04706eb9-2bc4-42ee-95fb-1daba0e75bf5/675a3adb-96b0-4219-9b8c-cc81bff2dadf"
           (reference "#PWR034") (unit 1)
         )

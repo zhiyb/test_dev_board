@@ -434,7 +434,7 @@
     "pinned_symbol_libs": []
   },
   "meta": {
-    "filename": "epd_remote.kicad_pro",
+    "filename": "pmic_dev.kicad_pro",
     "version": 1
   },
   "net_settings": {
@@ -590,7 +590,7 @@
       "workbook_filename": ""
     },
     "page_layout_descr_file": "",
-    "plot_directory": "",
+    "plot_directory": "output/",
     "spice_adjust_passive_values": false,
     "spice_current_sheet_as_root": false,
     "spice_external_command": "spice \"%I\"",
