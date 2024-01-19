@@ -1,0 +1,9 @@
+[submodule "pico/bme68x"]
+	path = pico/bme68x
+	url = https://github.com/BoschSensortec/BME68x-Sensor-API.git
+[submodule "pico/pico-sdk"]
+	path = pico/pico-sdk
+	url = https://github.com/raspberrypi/pico-sdk.git
+[submodule "pico/bmp2"]
+	path = pico/bmp2
+	url = https://github.com/BoschSensortec/BMP2-Sensor-API.git
