@@ -25,15 +25,35 @@ int main()
 {
     init();
 
+    uint8_t prev_key = 0;
+    uint8_t power_esp = 0;
+    uint8_t power_pico = 0;
+
     for (;;) {
         uint8_t key = key_state();
+        if (prev_key == key)
+            continue;
+        uint32_t pressed = key & ~prev_key;
+        prev_key = key;
+
         uint8_t led = 0;
-        if (key & 1)
-            led |= 0b011;
-        if (key & 2)
-            led |= 0b100;
+        if (key)
+            led |= 0b010;   // Green
+
+        if (pressed & 1) {
+            power_esp = !power_esp;
+            dev_esp_en(power_esp);
+        }
+        if (power_esp)
+            led |= 0b100;   // Red
+
+        if (pressed & 2) {
+            power_pico = !power_pico;
+            dev_pico_en(power_pico);
+        }
+        if (power_pico)
+            led |= 0b001;   // Blue
+
         led_set(led);
-        dev_pico_en(key & 1);
-        dev_esp_en(key & 2);
     }
 }
