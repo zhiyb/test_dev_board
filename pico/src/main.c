@@ -29,7 +29,7 @@
 #define REPORT_INTERVAL_US          (30 * 1000 * 1000)
 #endif
 
-#define ESP_POWER_SAVE              0
+#define ESP_POWER_SAVE              1
 #define ESP_BOOT_US                 (1 * 1000 * 1000)
 
 #define ESP_DMA_BUF_ADDR_BITS       12
@@ -46,7 +46,7 @@ static const int spi_esp_rx_dma = 1;
 static const int pin_req = 1;
 static const int pin_ack = 0;
 
-static const unsigned int esp_pin = 22;
+static const unsigned int esp_pin = 6;
 
 static char str_buf[8 * 1024];
 
@@ -74,6 +74,10 @@ volatile struct {
     result_t data[256];
     uint8_t wr, rd;
 } results;
+
+enum {NicReqGet = 0x5a, NicReqPost = 0xa5};
+
+static void esp_enable(bool en);
 
 
 static void init_i2c(void)
@@ -179,13 +183,13 @@ static void init_gpio(void)
     gpio_init(esp_pin);
     gpio_set_dir(esp_pin, GPIO_OUT);
 #if ESP_POWER_SAVE
-    gpio_put(esp_pin, false);
+    esp_enable(false);
 #else
-    gpio_put(esp_pin, true);
+    esp_enable(true);
 #endif
 
     gpio_init(pin_req);
-    gpio_put(pin_req, 1);
+    gpio_put(pin_req, 0);
     gpio_set_dir(pin_req, GPIO_OUT);
     gpio_set_pulls(pin_req, false, false);
     gpio_set_slew_rate(pin_req, GPIO_SLEW_RATE_SLOW);
@@ -215,9 +219,7 @@ static void toggle_led(void)
 
 static void esp_enable(bool en)
 {
-#if ESP_POWER_SAVE
-    gpio_put(esp_pin, en);
-#endif
+    gpio_put(esp_pin, !en);
 }
 
 
@@ -225,25 +227,33 @@ static void esp_enable(bool en)
 static int send_data(const char *url, const char *data)
 {
     // Prepare SPI data buffer
+    const unsigned int headerlen = data ? 7 : 5;
     const unsigned int urllen = strlen(url);
     const unsigned int datalen = strlen(data);
-    uint8_t header[5] = {
-        0xa5,           // POST
+    uint8_t header[] = {
+        data ? NicReqPost : NicReqGet,
         urllen,
         urllen >> 8,
         datalen,
         datalen >> 8,
+        0, 0,
     };
 
     unsigned int ibuf = 0;
-    memcpy((void *)&esp_dma_buf.buf[ibuf], header, 5);
-    ibuf += 5;
+    // Skip header for now
+    ibuf += headerlen;
     memcpy((void *)&esp_dma_buf.buf[ibuf], url, urllen);
     ibuf += urllen;
     memcpy((void *)&esp_dma_buf.buf[ibuf], data, datalen);
     ibuf += datalen;
-    // Clear status code
-    memset((void *)&esp_dma_buf.buf[ibuf], 0, 2);
+    // Clear status code and response size
+    memset((void *)&esp_dma_buf.buf[ibuf], 0, 4);
+
+    // Update resp buffer size, request header
+    // response code (2), response size (2)
+    unsigned int resplen = sizeof(esp_dma_buf.buf) - (ibuf + 2 + 2);
+    memcpy(&header[headerlen - 2], &resplen, 2);
+    memcpy((void *)&esp_dma_buf.buf[0], header, headerlen);
 
     // Start SPI and send out data packet
     // Actually maximum bitrate we can achieve in slave mode is 133MHz/12 = 11Mbps
@@ -256,20 +266,34 @@ static int send_data(const char *url, const char *data)
     dma_channel_set_write_addr(spi_esp_rx_dma, esp_dma_buf.buf, true);
     //dma_start_channel_mask((1 << spi_esp_tx_dma) | (1 << spi_esp_rx_dma));
 
-    gpio_put(pin_req, 0);
+    gpio_put(pin_req, 1);
     while (gpio_get(pin_ack) == 1);
 
+    gpio_put(pin_req, 0);
     dma_channel_abort(spi_esp_rx_dma);
     dma_channel_abort(spi_esp_tx_dma);
     spi_deinit(spi_esp);
-
-    gpio_put(pin_req, 1);
     while (gpio_get(pin_ack) == 0);
 
     uint16_t code = 0;
     memcpy(&code, (void *)&esp_dma_buf.buf[ibuf], 2);
+    ibuf += 2;
 
-    return code == 200 ? RESULT_OK : -code;
+    if (code != 200)
+        return -code;
+
+    return RESULT_OK;
+
+    // Return responses
+    uint16_t respret = 0;
+    memcpy(&respret, (void *)&esp_dma_buf.buf[ibuf], 2);
+    ibuf += 2;
+
+    if (respret < resplen)
+        resplen = respret;
+    //*resp = respret;
+
+    //return (uint8_t *)&esp_dma_buf.buf[ibuf];
 }
 
 // Core 1 interrupt Handler
