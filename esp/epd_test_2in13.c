@@ -165,16 +165,19 @@ static void epd_func_init(void)
 
 static void epd_func_update(const uint8_t *pimg)
 {
+    const uint8_t *img_bw  = pimg;
+    const uint8_t *img_red = pimg + EPD_IMAGE_SIZE;
+    epd_display_start(img_bw, img_red);
 }
 
-epd_func_t epd_func_2in13(void)
+const epd_func_t *epd_func_2in13(void)
 {
-    epd_func_t func = {
+    static const epd_func_t func = {
         .init = &epd_func_init,
         .wait = &epd_busy,
         .update = &epd_func_update,
     };
-    return func;
+    return &func;
 }
 
 void epd_test_2in13(void)

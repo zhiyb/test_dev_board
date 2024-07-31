@@ -1,6 +1,7 @@
 #pragma once
 
 typedef enum {
+    EPD_TYPE_INVALID,
     EPD_TYPE_2IN13_RWB,
     EPD_TYPE_4IN2_RWB,
     EPD_TYPE_5IN65_FULL,

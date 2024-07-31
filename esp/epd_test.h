@@ -14,8 +14,8 @@ typedef struct {
     void (*wait)(void);
 } epd_func_t;
 
-epd_func_t epd_func_2in13(void);
-epd_func_t epd_func_4in2(void);
+const epd_func_t *epd_func_2in13(void);
+const epd_func_t *epd_func_4in2(void);
 
 void epd_test_2in13(void);
 void epd_test_4in2(void);
