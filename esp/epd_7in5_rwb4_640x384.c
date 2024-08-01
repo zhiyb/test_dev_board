@@ -14,13 +14,6 @@ static void epd_reset(void)
     sleep_ms(100);
 }
 
-static void epd_disable(void)
-{
-    spi_master_enable(0);
-    gpio_set_rst(0);
-    sleep_ms(2);
-}
-
 static void epd_busy(void)
 {
     do
@@ -45,49 +38,6 @@ static void epd_data(uint8_t v)
 static void epd_update_start(void)
 {
     epd_cmd(0x12); // DISPLAY_REFRESH
-}
-
-static void epd_update(void)
-{
-    epd_update_start();
-    epd_busy();
-}
-
-static void epd_display_start(const uint8_t *bw, const uint8_t *red)
-{
-    static const uint32_t w = (EPD_WIDTH + 7) / 8, h = EPD_HEIGHT;
-    uint32_t area = w * h;
-
-    epd_cmd(0x10);
-
-    for (uint32_t i = 0; i < area / 2; i++) {
-        uint8_t data = 0, val = 0;
-        uint32_t start = i * 2;
-        uint8_t c_bw = bw[start / 8] << (start % 8);
-        uint8_t c_red = red[start / 8] << (start % 8);
-        if (!(c_red & 0x80))
-            val = 0b100;    // Red
-        else if (c_bw & 0x80)
-            val = 0b011;    // White
-        else
-            val = 0b000;    // Black
-        data = val << 4;
-
-        start += 1;
-        c_bw = bw[start / 8] << (start % 8);
-        c_red = red[start / 8] << (start % 8);
-        if (!(c_red & 0x80))
-            val = 0b100;    // Red
-        else if (c_bw & 0x80)
-            val = 0b011;    // White
-        else
-            val = 0b000;    // Black
-        data |= val;
-
-        epd_data(data);
-    }
-
-    epd_update_start();
 }
 
 static void epd_func_update(const uint8_t *pimg, uint32_t ofs, uint32_t len)
@@ -152,7 +102,6 @@ const epd_func_t *epd_7in5_rwb4_640x384(void)
         .init = &epd_func_init,
         .wait = &epd_busy,
         .update = &epd_func_update,
-        .disable = &epd_disable,
     };
     return &func;
 }

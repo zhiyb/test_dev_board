@@ -6,7 +6,7 @@ static const unsigned int gpio_epd_ncs  = 12;
 static const unsigned int gpio_epd_dc   = 4;
 static const unsigned int gpio_epd_rst  = 2;
 
-void init_epd(void)
+void epd_init(void)
 {
     SPI.begin();
     // Maximum frequency 20MHz
@@ -19,6 +19,12 @@ void init_epd(void)
     pinMode(gpio_epd_rst,  OUTPUT);
     pinMode(gpio_epd_dc,   OUTPUT);
     pinMode(gpio_epd_ncs,  OUTPUT);
+}
+
+void epd_deinit(void)
+{
+    // Hold in reset
+    gpio_set_rst(0);
 }
 
 void systick_delay(uint32_t ms)

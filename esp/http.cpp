@@ -1,7 +1,7 @@
 #include <ESP8266HTTPClient.h>
 #include "http.h"
 
-#define DEBUG_PRINT         1
+#define DEBUG_PRINT         0
 #define DEBUG_PRINT_DATA    0
 
 HTTPClient http;

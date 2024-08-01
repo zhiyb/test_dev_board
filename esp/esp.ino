@@ -22,7 +22,7 @@ void setup()
         ESP.getFlashChipRealSize() / 1024 / 1024);
     sprintf(id, "esp_%08x_%08x", ESP.getChipId(), ESP.getFlashChipId());
 
-    init_epd();
+    epd_init();
 
     // Workaround for WiFI error: pll_cal exceeds 2ms
     delay(5);
@@ -68,6 +68,8 @@ void loop()
             func = epd_2in13_rwb_122x250();
         else if (stype.startsWith("epd_4in2_rwb_400x300"))
             func = epd_4in2_rwb_400x300();
+        else if (stype.startsWith("epd_5in65_7c_600x448"))
+            func = epd_5in65_7c_600x448();
         else if (stype.startsWith("epd_7in5_rwb4_640x384"))
             func = epd_7in5_rwb4_640x384();
     }
@@ -92,14 +94,7 @@ void loop()
 
     if (func)
         func->wait();
-
-    // Boot mode
-    // b0: GPIO02   should be 1
-    digitalWrite(2, HIGH);
-    // b1: GPIO00   should be 1
-    digitalWrite(0, HIGH);
-    // b2: GPIO15   should be 0
-    digitalWrite(15, LOW);
+    epd_deinit();
 
     Serial.println("#PMIC.OFF");
     for (;;)
