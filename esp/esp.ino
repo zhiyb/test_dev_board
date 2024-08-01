@@ -62,8 +62,12 @@ void loop()
     const epd_func_t *func = 0;
     {
         String stype = http_get(client, url, nullptr);
+        Serial.print("EPD: ");
+        Serial.println(stype);
         if (stype.startsWith("epd_2in13_rwb_122x250"))
             func = epd_2in13_rwb_122x250();
+        else if (stype.startsWith("epd_4in2_rwb_400x300"))
+            func = epd_4in2_rwb_400x300();
         else if (stype.startsWith("epd_7in5_rwb4_640x384"))
             func = epd_7in5_rwb4_640x384();
     }
@@ -80,7 +84,6 @@ void loop()
             const String data = http_get(client, url, nullptr);
             len = data.length();
             func->update((const uint8_t *)data.c_str(), ofs, len);
-            Serial.printf("%d, %d\n", ofs, len);
             ofs += len;
         } while(len == block);
     }

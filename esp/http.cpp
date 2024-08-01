@@ -22,12 +22,16 @@ const String &http_get(WiFiClient &client, const char *url, int *code)
     Serial.print("HTTP ");
     Serial.print(*code);
     Serial.print(" SIZE ");
-    Serial.println(http.getSize());
+    Serial.print(http.getSize());
 #endif
 
     if (*code != HTTP_CODE_OK)
         return String();
     const String &data = http.getString();
+#if DEBUG_PRINT
+    Serial.print(" READ ");
+    Serial.println(data.length());
+#endif
 #if DEBUG_PRINT_DATA
     Serial.print("DATA ");
     Serial.println(data);

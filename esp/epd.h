@@ -16,6 +16,7 @@ typedef struct {
 } epd_func_t;
 
 const epd_func_t *epd_2in13_rwb_122x250(void);
+const epd_func_t *epd_4in2_rwb_400x300(void);
 const epd_func_t *epd_7in5_rwb4_640x384(void);
 
 void init_epd(void);
