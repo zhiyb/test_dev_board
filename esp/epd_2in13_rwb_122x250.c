@@ -1,4 +1,4 @@
-#include "epd_test.h"
+#include "epd_private.h"
 
 #define EPD_WIDTH       122
 #define EPD_HEIGHT      250
@@ -116,6 +116,21 @@ static void epd_display_start(const uint8_t *bw, const uint8_t *red)
     epd_update_start();
 }
 
+static void epd_func_update(const uint8_t *pimg, uint32_t ofs, uint32_t len)
+{
+    static const uint32_t w = (EPD_WIDTH + 7) / 8, h = EPD_HEIGHT;
+    for (uint32_t i = 0; i < len; i++) {
+        uint32_t o = ofs + i;
+        if (o == 0)
+            epd_cmd(CMD_WRITE_RAM_BW);
+        else if (o == h * w)
+            epd_cmd(CMD_WRITE_RAM_RED);
+        epd_data(pimg[i]);
+    }
+    if (ofs + len >= h * w * 2)
+        epd_update_start();
+}
+
 static void epd_func_init(void)
 {
     epd_reset();
@@ -163,14 +178,7 @@ static void epd_func_init(void)
     epd_busy();
 }
 
-static void epd_func_update(const uint8_t *pimg)
-{
-    const uint8_t *img_bw  = pimg;
-    const uint8_t *img_red = pimg + EPD_IMAGE_SIZE;
-    epd_display_start(img_bw, img_red);
-}
-
-const epd_func_t *epd_func_2in13(void)
+const epd_func_t *epd_2in13_rwb_122x250(void)
 {
     static const epd_func_t func = {
         .init = &epd_func_init,
@@ -178,17 +186,4 @@ const epd_func_t *epd_func_2in13(void)
         .update = &epd_func_update,
     };
     return &func;
-}
-
-void epd_test_2in13(void)
-{
-    static const uint8_t bw[] = {
-#include "test_patterns/tp2_128x250_k.h"
-    };
-    static const uint8_t red[] = {
-#include "test_patterns/tp2_128x250_r.h"
-    };
-
-    epd_display_start(bw, red);
-    epd_busy();
 }

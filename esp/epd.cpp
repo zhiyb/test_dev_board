@@ -1,9 +1,17 @@
 #include <SPI.h>
-#include "epd.h"
-#include "epd_test.h"
+#include "epd_private.h"
+
+static const unsigned int gpio_epd_busy = 16;
+static const unsigned int gpio_epd_ncs  = 15;
+static const unsigned int gpio_epd_dc   = 0;
+static const unsigned int gpio_epd_rst  = 2;
 
 void init_epd(void)
 {
+    SPI.begin();
+    // Maximum frequency 20MHz
+    SPI.beginTransaction(SPISettings(20 * 1000 * 1000, MSBFIRST, SPI_MODE0));
+
     digitalWrite(gpio_epd_rst, HIGH);
     digitalWrite(gpio_epd_dc,  HIGH);
     digitalWrite(gpio_epd_ncs, HIGH);
@@ -11,10 +19,6 @@ void init_epd(void)
     pinMode(gpio_epd_rst,  OUTPUT);
     pinMode(gpio_epd_dc,   OUTPUT);
     pinMode(gpio_epd_ncs,  OUTPUT);
-
-    SPI.begin();
-    // Maximum frequency 20MHz
-    SPI.beginTransaction(SPISettings(20 * 1000 * 1000, MSBFIRST, SPI_MODE0));
 }
 
 void systick_delay(uint32_t ms)

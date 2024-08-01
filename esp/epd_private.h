@@ -8,21 +8,6 @@
 extern "C" {
 #endif
 
-typedef struct {
-    void (*init)(void);
-    void (*update)(const uint8_t *pimg);
-    void (*wait)(void);
-} epd_func_t;
-
-const epd_func_t *epd_func_2in13(void);
-const epd_func_t *epd_func_4in2(void);
-
-void epd_test_2in13(void);
-void epd_test_4in2(void);
-void epd_test_7in5(void);
-void epd_test_7in5_480p(void);
-void epd_test_5in65(void);
-
 // HAL compatibility
 void systick_delay(uint32_t ms);
 void sleep_ms(uint32_t ms);

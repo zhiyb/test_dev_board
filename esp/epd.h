@@ -1,15 +1,25 @@
 #pragma once
 
-typedef enum {
-    EPD_TYPE_INVALID,
-    EPD_TYPE_2IN13_RWB,
-    EPD_TYPE_4IN2_RWB,
-    EPD_TYPE_5IN65_FULL,
-} epd_type_t;
+#include <stdbool.h>
+#include <stdint.h>
+#include "epd.h"
 
-static const unsigned int gpio_epd_busy = 16;
-static const unsigned int gpio_epd_ncs  = 15;
-static const unsigned int gpio_epd_dc   = 0;
-static const unsigned int gpio_epd_rst  = 2;
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+typedef struct {
+    void (*init)(void);
+    void (*update)(const uint8_t *pimg, uint32_t ofs, uint32_t len);
+    void (*wait)(void);
+    void (*disable)(void);
+} epd_func_t;
+
+const epd_func_t *epd_2in13_rwb_122x250(void);
+const epd_func_t *epd_7in5_rwb4_640x384(void);
 
 void init_epd(void);
+
+#ifdef __cplusplus
+}
+#endif
