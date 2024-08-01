@@ -24,6 +24,9 @@ void setup()
 
     init_epd();
 
+    // Workaround for WiFI error: pll_cal exceeds 2ms
+    delay(5);
+
     //WiFi.mode(WIFI_STA);
     WiFiMulti.addAP(WIFI_SSID, WIFI_PASSWORD);
 

@@ -2,8 +2,8 @@
 #include "epd_private.h"
 
 static const unsigned int gpio_epd_busy = 16;
-static const unsigned int gpio_epd_ncs  = 15;
-static const unsigned int gpio_epd_dc   = 0;
+static const unsigned int gpio_epd_ncs  = 12;
+static const unsigned int gpio_epd_dc   = 4;
 static const unsigned int gpio_epd_rst  = 2;
 
 void init_epd(void)
