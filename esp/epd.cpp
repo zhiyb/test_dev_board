@@ -4,13 +4,12 @@
 static const unsigned int gpio_epd_busy = 16;
 static const unsigned int gpio_epd_ncs  = 12;
 static const unsigned int gpio_epd_dc   = 4;
-static const unsigned int gpio_epd_rst  = 2;
+static const unsigned int gpio_epd_rst  = 15;
 
 void epd_init(void)
 {
     SPI.begin();
-    // Maximum frequency 20MHz
-    SPI.beginTransaction(SPISettings(20 * 1000 * 1000, MSBFIRST, SPI_MODE0));
+    SPI.beginTransaction(SPISettings(10 * 1000 * 1000, MSBFIRST, SPI_MODE0));
 
     digitalWrite(gpio_epd_rst, HIGH);
     digitalWrite(gpio_epd_dc,  HIGH);

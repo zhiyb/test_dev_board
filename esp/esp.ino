@@ -96,6 +96,11 @@ void loop()
         func->wait();
     epd_deinit();
 
+    // Boot mode
+    // b0: GPIO02   should be 1
+    // b1: GPIO00   should be 1
+    // b2: GPIO15   should be 0
+
     Serial.println("#PMIC.OFF");
     for (;;)
         ESP.deepSleep(0, WAKE_RF_DISABLED);
