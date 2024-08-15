@@ -1,7 +1,7 @@
 # Author: Yubo Zhi (normanzyb@gmail.com)
 
 TRG	= pmic
-SRC	= main.cpp led.cpp key.cpp dev.cpp
+SRC	= main.cpp led.cpp key.cpp dev.cpp uart0.cpp
 
 MCU_TARGET	= atmega168p
 MCU_FREQ	= 8000000
