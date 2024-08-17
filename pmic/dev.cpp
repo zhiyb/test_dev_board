@@ -1,20 +1,23 @@
 #include <avr/io.h>
-
 #include "dev.h"
 
-void dev_pico_en(uint8_t en)
+uint8_t dev_pwr_state(void)
 {
-    if (en)
-        PORTD |= (1 << 7);
-    else
-        PORTD &= ~(1 << 7);
-
+    uint8_t v = 0;
+    if (PORTD & _BV(7))     // PICO_EN
+        v |= DEV_PICO_MASK;
+    if (!(PORTD & _BV(4)))  // ESP_EN
+        v |= DEV_ESP_MASK;
+    return v;
 }
 
-void dev_esp_en(uint8_t en)
+void dev_pwr_en(uint8_t v)
 {
-    if (en)
-        PORTD &= ~(1 << 4);
-    else
-        PORTD |= (1 << 4);
+    uint8_t portm = _BV(7) | _BV(4);
+    uint8_t portv = 0;
+    if (v & DEV_PICO_MASK)
+        portv |= _BV(7);
+    if (!(v & DEV_ESP_MASK))
+        portv |= _BV(4);
+    PORTD = (PORTD & ~portm) | portv;
 }

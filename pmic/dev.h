@@ -15,5 +15,8 @@
 #define DEV_INIT_DDRC_MASK   0
 #define DEV_INIT_DDRD_MASK   ((1 << 4) | (1 << 7))
 
-void dev_pico_en(uint8_t en);
-void dev_esp_en(uint8_t en);
+#define DEV_PICO_MASK   _BV(0)
+#define DEV_ESP_MASK    _BV(1)
+
+uint8_t dev_pwr_state(void);
+void dev_pwr_en(uint8_t en);
