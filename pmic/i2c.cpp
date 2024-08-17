@@ -1,14 +1,17 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
+#include <avr/power.h>
 #include <util/twi.h>
 #include "i2c.h"
-#include "dev.h"
+#include "led.h"
 
 #define I2C_BPS     400000
 #define I2C_ADDR    0x39
 
 void i2c_slave_init(void)
 {
+    power_twi_enable();
+
     // Initialise I2C bit rate 400 kHz
     TWCR = 0;
     TWAMR = 0;
@@ -59,8 +62,7 @@ ISR(TWI_vect)
         break;
     }
 
-    extern bool act(bool reset);
-    act(true);
-
+    // Done, start new I2C operation
     TWCR = _BV(TWEA) | _BV(TWEN) | _BV(TWIE) | _BV(TWINT) | op;
+    led_act_trigger();
 }

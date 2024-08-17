@@ -1,16 +1,19 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 #include <avr/eeprom.h>
+#include <avr/power.h>
 #include <util/delay.h>
 #include "adc.h"
+#include "led.h"
 #include "eeprom.h"
 
 // Take multiple measurements to wait until voltages are stable
 // Bandgap init requires 70us + capacitor charging
+// May need 1ms or more to stabilise
 static const uint8_t adc_samples = 32;
 
 static enum {AdcIdle = 0, AdcTemp, AdcVbg} adc_state;
-static uint16_t adc_val[2];
+static volatile uint16_t adc_val[2];
 static uint8_t adc_count;
 
 static inline void adc_start_temp(void)
@@ -33,6 +36,12 @@ static inline void adc_start_vcc(void)
     ADCSRA = _BV(ADEN) | _BV(ADSC) | _BV(ADIF) | _BV(ADIE) | _BV(ADPS2) | _BV(ADPS1) | _BV(ADPS0);
 }
 
+static inline void adc_disable(void)
+{
+    power_adc_disable();
+    ADCSRA = 0;
+}
+
 static inline void adc_cal(void)
 {
     // Convert from calibrated VBG to Vcc
@@ -46,6 +55,7 @@ static void adc_next(void)
     case AdcIdle:
         adc_state = AdcTemp;
         adc_count = adc_samples;
+        power_adc_enable();
         adc_start_temp();
         break;
     case AdcTemp:
@@ -65,14 +75,14 @@ static void adc_next(void)
         if (adc_count != 0) {
             adc_start_vcc();
         } else {
+            adc_disable();
             adc_cal();
             adc_state = AdcIdle;
         }
         break;
     }
 
-    extern bool act(bool reset);
-    act(true);
+    led_act_trigger();
 }
 
 bool adc_busy(void)

@@ -1,8 +1,11 @@
 #include <avr/io.h>
+#include <avr/power.h>
 #include "uart.h"
 
 void uart0_init(void)
 {
+    power_usart0_enable();
+
     // UART 0 initialisation
     #define BAUD	UART0_BAUD
     #include <util/setbaud.h>

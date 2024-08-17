@@ -1,15 +1,48 @@
 #include <avr/io.h>
 #include "led.h"
+#include "timer.h"
 
-void led_set(uint8_t state)
+uint8_t led_state = 0;
+
+void led_init(void)
 {
-    uint8_t bmask = 0, dmask = 0;
-    if (!(state & 0x04))   // RED
-        dmask |= (1 << PD6);
-    if (!(state & 0x02))   // GREEN
-        bmask |= (1 << PB3);
-    if (!(state & 0x01))   // BLUE
-        dmask |= (1 << PD5);
-    PORTD = PORTD & ~((1 << PD5) | (1 << PD6)) | dmask;
-    PORTB = PORTB & ~((1 << PB3)) | bmask;
+    led_set(LedRed, false);
+    led_set(LedGreen, false);
+    led_set(LedBlue, false);
+}
+
+void led_set(led_t led, bool on)
+{
+    // Use one-bit writes for safe atomic RMW
+    switch (led) {
+    case LedRed:
+        if (on)
+            PORTD &= ~_BV(PD6);
+        else
+            PORTD |= _BV(PD6);
+        break;
+    case LedGreen:
+        if (on)
+            PORTB &= ~_BV(PB3);
+        else
+            PORTB |= _BV(PB3);
+        break;
+    case LedBlue:
+        if (on)
+            PORTD &= ~_BV(PD5);
+        else
+            PORTD |= _BV(PD5);
+        break;
+    }
+}
+
+void led_act_trigger(void)
+{
+    led_set(LedGreen, true);
+    timer0_restart();
+}
+
+void led_act_off(void)
+{
+    led_set(LedGreen, false);
 }

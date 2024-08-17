@@ -1,12 +1,16 @@
 # Author: Yubo Zhi (normanzyb@gmail.com)
 
 TRG	= pmic
-SRC	= main.cpp led.cpp key.cpp dev.cpp uart0.cpp i2c.cpp i2c_regs.cpp adc.cpp
+SRC	= main.cpp led.cpp key.cpp dev.cpp i2c.cpp i2c_regs.cpp adc.cpp timer0.cpp
 
 MCU_TARGET	= atmega168p
 MCU_FREQ	= 8000000
+
 EFUSE		= 0xf9
-HFUSE		= 0xdf
+# DWEN disabled to save power
+# Keep EEPROM content through chip erase
+# BOD disabled
+HFUSE		= 0xd7
 # Internal RC, 8MHz
 LFUSE		= 0xe2
 # Crystal
