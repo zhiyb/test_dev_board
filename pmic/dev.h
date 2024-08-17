@@ -20,3 +20,4 @@
 
 uint8_t dev_pwr_state(void);
 void dev_pwr_en(uint8_t en);
+void dev_wdt_irq(uint32_t tick);

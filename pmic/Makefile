@@ -1,7 +1,7 @@
 # Author: Yubo Zhi (normanzyb@gmail.com)
 
 TRG	= pmic
-SRC	= main.cpp led.cpp key.cpp dev.cpp i2c.cpp i2c_regs.cpp adc.cpp timer0.cpp
+SRC	= main.cpp led.cpp key.cpp dev.cpp i2c.cpp i2c_regs.cpp adc.cpp timer0.cpp wdt.cpp
 
 MCU_TARGET	= atmega168p
 MCU_FREQ	= 8000000

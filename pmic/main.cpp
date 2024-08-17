@@ -10,6 +10,7 @@
 #include "i2c.h"
 #include "adc.h"
 #include "timer.h"
+#include "wdt.h"
 
 void init()
 {
@@ -38,6 +39,7 @@ void init()
     i2c_slave_init();
     key_init();
     timer0_init();
+    wdt_init();
     sei();
 }
 
@@ -55,13 +57,7 @@ int main()
                 dev_pwr_en(dev_pwr_state() ^ 1);
             if (pressed & 2)
                 dev_pwr_en(dev_pwr_state() ^ 2);
-            if (dev_pwr_state())
-                adc_start();
         }
-
-        uint8_t pwr = dev_pwr_state();
-        led_set(LedRed, pwr & 1);
-        led_set(LedBlue, pwr & 2);
 
         // Select appropriate sleep mode and go to sleep
         cli();
