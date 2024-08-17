@@ -3,50 +3,92 @@
 #include "led.h"
 #include "adc.h"
 #include "wdt.h"
+#include "eeprom.h"
 
-static uint32_t esp_start_tick = 0;
+// Automatically restart a device after some time if it was timed out
+static const uint32_t timeout_reschedule_sec = 60 * 60;
 
-uint8_t dev_pwr_state(void)
+static volatile struct {
+    uint32_t schedule_ticks;
+    uint32_t start_tick;
+    uint32_t enable_tick;
+    bool scheduled;
+} devs[2];
+
+bool dev_pwr_enabled(dev_t dev)
 {
-    uint8_t v = 0;
-    if (PORTD & _BV(7))     // PICO_EN
-        v |= DEV_PICO_MASK;
-    if (!(PORTD & _BV(4)))  // ESP_EN
-        v |= DEV_ESP_MASK;
-    return v;
+    switch (dev) {
+    case DevPico:
+        return !!(PORTD & _BV(7));
+    case DevEsp:
+        return !(PORTD & _BV(4));
+    }
+    return false;
 }
 
-void dev_pwr_en(uint8_t v)
+void dev_pwr_en(dev_t dev, bool en)
 {
-    uint8_t portm = _BV(7) | _BV(4);
-    uint8_t portv = 0;
-    if (v & DEV_PICO_MASK)
-        portv |= _BV(7);
-    if (!(v & DEV_ESP_MASK))
-        portv |= _BV(4);
-    PORTD = (PORTD & ~portm) | portv;
+    switch (dev) {
+    case DevPico:
+        if (en)
+            PORTD |= _BV(7);
+        else
+            PORTD &= ~_BV(7);
+        led_set(LedBlue, en);
+        break;
+    case DevEsp:
+        if (en)
+            PORTD &= ~_BV(4);
+        else
+            PORTD |= _BV(4);
+        led_set(LedRed, en);
+        break;
+    }
+    devs[dev].enable_tick = wdt_tick();
 
-    // Update LEDs
-    led_set(LedRed, v & DEV_ESP_MASK);
-    led_set(LedBlue, v & DEV_PICO_MASK);
     // Trigger ADC if enabling any controller
-    if (v & (DEV_PICO_MASK | DEV_ESP_MASK))
+    if (en)
         adc_start();
-    // Update periodic timer
-    if (v & DEV_ESP_MASK)
-        esp_start_tick = wdt_tick();
 }
 
 void dev_wdt_irq(uint32_t tick)
 {
-    // Enable ESP every hour
-    const uint32_t esp_period = wdt_sec_to_ticks(60 * 60);
+    for (dev_t dev = (dev_t)0; dev < NumDevs; dev = (dev_t)(dev + 1)) {
+        if (!devs[dev].scheduled)
+            continue;
 
-    if (tick - esp_start_tick >= esp_period) {
-        esp_start_tick = tick;
+        if (dev_pwr_enabled(dev)) {
+            // Device enabled, check for turn-off timeout
+            uint16_t *p = 0;
+            if (dev == DevPico)
+                p = &eeprom_data->pico_timeout_sec;
+            else if (dev == DevEsp)
+                p = &eeprom_data->esp_timeout_sec;
+            uint16_t timeout_sec = eeprom_read_word(p);
+            uint32_t timeout_ticks = wdt_sec_to_ticks(timeout_sec);
+            uint32_t delta = tick - devs[dev].enable_tick;
+            if (delta >= timeout_ticks) {
+                // Timed out, reschedule after some time
+                dev_pwr_en(dev, false);
+                devs[dev].schedule_ticks = wdt_sec_to_ticks(timeout_reschedule_sec);
+                devs[dev].scheduled = true;
+            }
 
-        uint8_t state = dev_pwr_state();
-        if (!(state & DEV_ESP_MASK))
-            dev_pwr_en(state | DEV_ESP_MASK);
+        } else {
+            // Device not enabled, check for scheduled turn-on time
+            uint32_t delta = tick - devs[dev].start_tick;
+            if (delta >= devs[dev].schedule_ticks) {
+                devs[dev].scheduled = false;
+                dev_pwr_en(dev, true);
+            }
+        }
     }
+}
+
+void dev_schedule_sec(dev_t dev, uint32_t sec)
+{
+    devs[dev].scheduled = false;
+    devs[dev].start_tick = wdt_tick();
+    devs[dev].schedule_ticks = wdt_sec_to_ticks(sec);
+    devs[dev].scheduled = true;
 }

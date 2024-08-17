@@ -49,7 +49,7 @@ all: $(TRG).hex eeprom.bin
 %.o: %.cpp
 	$(CXX) $(CPPFLAGS) -c -o $@ $<
 
-eeprom.bin: calibration.py
+eeprom.bin: eeprom.py
 	./$< -o $@
 
 .PHONY: clean

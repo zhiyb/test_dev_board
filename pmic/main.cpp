@@ -11,6 +11,7 @@
 #include "adc.h"
 #include "timer.h"
 #include "wdt.h"
+#include "eeprom.h"
 
 void init()
 {
@@ -47,6 +48,10 @@ int main()
 {
     init();
 
+    uint8_t boot_mode = eeprom_read_byte(&eeprom_data->boot_mode);
+    dev_pwr_en(DevPico, boot_mode & 1);
+    dev_pwr_en(DevEsp, boot_mode & 2);
+
     for (;;) {
         static uint8_t prev_key = 0;
         uint8_t key = key_state();
@@ -54,15 +59,15 @@ int main()
             uint32_t pressed = key & ~prev_key;
             prev_key = key;
             if (pressed & 1)
-                dev_pwr_en(dev_pwr_state() ^ 1);
+                dev_pwr_en(DevPico, !dev_pwr_enabled(DevPico));
             if (pressed & 2)
-                dev_pwr_en(dev_pwr_state() ^ 2);
+                dev_pwr_en(DevEsp, !dev_pwr_enabled(DevEsp));
         }
 
         // Select appropriate sleep mode and go to sleep
         cli();
         uint8_t sleep = SLEEP_MODE_PWR_DOWN;
-        if (dev_pwr_state() | timer0_enabled())
+        if (dev_pwr_enabled(DevPico) | dev_pwr_enabled(DevEsp) | timer0_enabled())
             sleep = SLEEP_MODE_IDLE;    // Some controllers still powered on
         set_sleep_mode(sleep);
         sleep_enable();

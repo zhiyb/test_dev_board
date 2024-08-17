@@ -15,9 +15,14 @@
 #define DEV_INIT_DDRC_MASK   0
 #define DEV_INIT_DDRD_MASK   ((1 << 4) | (1 << 7))
 
-#define DEV_PICO_MASK   _BV(0)
-#define DEV_ESP_MASK    _BV(1)
+typedef enum {
+    DevPico = 0,
+    DevEsp,
+    NumDevs
+} dev_t;
 
-uint8_t dev_pwr_state(void);
-void dev_pwr_en(uint8_t en);
+bool dev_pwr_enabled(dev_t dev);
+void dev_pwr_en(dev_t dev, bool en);
+
 void dev_wdt_irq(uint32_t tick);
+void dev_schedule_sec(dev_t dev, uint32_t sec);
