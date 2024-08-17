@@ -8,6 +8,7 @@
 #include "dev.h"
 #include "uart.h"
 #include "i2c.h"
+#include "adc.h"
 
 void init()
 {
@@ -29,6 +30,7 @@ void init()
            UART_INIT_DDRD_MASK | I2C_INIT_DDRD_MASK;
 
     uart0_init();
+    adc_start();
     i2c_slave_init();
     sei();
 }
@@ -64,6 +66,8 @@ int main()
                 dev_pwr_en(dev_pwr_state() ^ 1);
             if (pressed & 2)
                 dev_pwr_en(dev_pwr_state() ^ 2);
+            if (dev_pwr_state())
+                adc_start();
         }
 
         // UART activity light

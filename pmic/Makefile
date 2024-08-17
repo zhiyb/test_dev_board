@@ -1,7 +1,7 @@
 # Author: Yubo Zhi (normanzyb@gmail.com)
 
 TRG	= pmic
-SRC	= main.cpp led.cpp key.cpp dev.cpp uart0.cpp i2c.cpp i2c_regs.cpp
+SRC	= main.cpp led.cpp key.cpp dev.cpp uart0.cpp i2c.cpp i2c_regs.cpp adc.cpp
 
 MCU_TARGET	= atmega168p
 MCU_FREQ	= 8000000
@@ -33,7 +33,7 @@ LDFLAGS		= -mmcu=$(MCU_TARGET) $(OPTIMIZE)
 LIBS		=
 
 .PHONY: all
-all: $(TRG).hex
+all: $(TRG).hex eeprom.bin
 
 %.hex: %.elf
 	$(OBJCOPY) -j .text -j .data -O ihex $< $@
@@ -45,6 +45,9 @@ all: $(TRG).hex
 %.o: %.cpp
 	$(CXX) $(CPPFLAGS) -c -o $@ $<
 
+eeprom.bin: calibration.py
+	./$< -o $@
+
 .PHONY: clean
 clean:
-	rm -f $(SRC:%.cpp=%.o) $(TRG).elf $(TRG).hex
+	rm -f $(SRC:%.cpp=%.o) $(TRG).elf $(TRG).hex eeprom.bin
