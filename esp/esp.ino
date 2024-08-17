@@ -3,6 +3,7 @@
 #include "wifi_network.h"
 #include "http.h"
 #include "epd.h"
+#include "pmic.h"
 
 static const unsigned int max_urllen = 128;
 static const unsigned int max_datalen = 8192;
@@ -59,23 +60,23 @@ void loop()
     static char url[96];
     sprintf(url, "%sid=%s&key=%s", url_base, id, "type");
 
-    const epd_func_t *func = 0;
+    const epd_func_t *epd_func = 0;
     {
         String stype = http_get(client, url, nullptr);
         Serial.print("EPD: ");
         Serial.println(stype);
         if (stype.startsWith("epd_2in13_rwb_122x250"))
-            func = epd_2in13_rwb_122x250();
+            epd_func = epd_2in13_rwb_122x250();
         else if (stype.startsWith("epd_4in2_rwb_400x300"))
-            func = epd_4in2_rwb_400x300();
+            epd_func = epd_4in2_rwb_400x300();
         else if (stype.startsWith("epd_5in65_7c_600x448"))
-            func = epd_5in65_7c_600x448();
+            epd_func = epd_5in65_7c_600x448();
         else if (stype.startsWith("epd_7in5_rwb4_640x384"))
-            func = epd_7in5_rwb4_640x384();
+            epd_func = epd_7in5_rwb4_640x384();
     }
 
-    if (func) {
-        func->init();
+    if (epd_func) {
+        epd_func->init();
         static const uint32_t block = 1024 * 4;
         uint32_t ofs = 0;
         uint32_t len = 0;
@@ -85,15 +86,19 @@ void loop()
                 url_base, id, "data", ofs, len);
             const String data = http_get(client, url, nullptr);
             len = data.length();
-            func->update((const uint8_t *)data.c_str(), ofs, len);
+            epd_func->update((const uint8_t *)data.c_str(), ofs, len);
             ofs += len;
         } while(len == block);
     }
 
-    WiFi.disconnect();
+    // Configure PMIC for next wakeup
+    pmic_init();
+    pmic_update();
 
-    if (func)
-        func->wait();
+    // Done
+    WiFi.disconnect();
+    if (epd_func)
+        epd_func->wait();
     epd_deinit();
 
     // Boot mode
@@ -101,7 +106,8 @@ void loop()
     // b1: GPIO00   should be 1
     // b2: GPIO15   should be 0
 
-    Serial.println("#PMIC.OFF");
+    Serial.println("SLEEP");
+    pmic_shutdown();
     for (;;)
         ESP.deepSleep(0, WAKE_RF_DISABLED);
 }

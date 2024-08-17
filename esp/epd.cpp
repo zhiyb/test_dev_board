@@ -1,10 +1,10 @@
 #include <SPI.h>
 #include "epd_private.h"
 
-static const unsigned int gpio_epd_busy = 16;
-static const unsigned int gpio_epd_ncs  = 12;
-static const unsigned int gpio_epd_dc   = 4;
-static const unsigned int gpio_epd_rst  = 15;
+static const unsigned int gpio_epd_busy = 16;   // WAKE
+static const unsigned int gpio_epd_ncs  = 12;   // MISO
+static const unsigned int gpio_epd_dc   = 4;    // SDA
+static const unsigned int gpio_epd_rst  = 15;   // CS
 
 void epd_init(void)
 {
