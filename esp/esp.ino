@@ -8,10 +8,8 @@
 static const unsigned int max_urllen = 128;
 static const unsigned int max_datalen = 8192;
 
-static const char url_base[] = "https://zhiyb.me/nas/api/disp.php?";
-
 ESP8266WiFiMulti WiFiMulti;
-WiFiClientSecure client;
+
 char id[32];
 
 void setup()
@@ -27,11 +25,10 @@ void setup()
 
     // Workaround for WiFI error: pll_cal exceeds 2ms
     delay(5);
-
     //WiFi.mode(WIFI_STA);
     WiFiMulti.addAP(WIFI_SSID, WIFI_PASSWORD);
 
-    client.setInsecure();
+    http_init();
 }
 
 void loop()
@@ -57,12 +54,12 @@ void loop()
     }
 
     // Get display type
-    static char url[96];
+    char url[96];
     sprintf(url, "%sid=%s&key=%s", url_base, id, "type");
 
     const epd_func_t *epd_func = 0;
     {
-        String stype = http_get(client, url, nullptr);
+        String stype = http_get(url, nullptr);
         Serial.print("EPD: ");
         Serial.println(stype);
         if (stype.startsWith("epd_2in13_rwb_122x250"))
@@ -84,7 +81,7 @@ void loop()
             len = block;
             sprintf(url, "%sid=%s&key=%s&ofs=%u&len=%u",
                 url_base, id, "data", ofs, len);
-            const String data = http_get(client, url, nullptr);
+            const String data = http_get(url, nullptr);
             len = data.length();
             epd_func->update((const uint8_t *)data.c_str(), ofs, len);
             ofs += len;
