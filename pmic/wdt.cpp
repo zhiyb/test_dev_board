@@ -25,14 +25,23 @@ uint32_t wdt_tick(void)
     return tick;
 }
 
-uint32_t wdt_sec_to_ticks(uint32_t sec)
+uint32_t wdt_sec_to_ticks(uint32_t secs)
 {
-    return sec * wdt_freq / wdt_div;
+    // Avoid u32 overflow
+    static const uint32_t blk_max_secs = (1ull << 32) / wdt_freq;
+    static const uint32_t blk_ticks = blk_max_secs * wdt_freq / wdt_div;
+    static const uint32_t blk_secs = blk_ticks * wdt_div / wdt_freq;
+    uint32_t ticks = 0;
+    while (secs >= blk_secs) {
+        ticks += blk_ticks;
+        secs -= blk_secs;
+    }
+    ticks += secs * wdt_freq / wdt_div;
+    return ticks;
 }
 
 ISR(WDT_vect)
 {
     tick += 1;
-    led_act_trigger();
     dev_wdt_irq(tick);
 }
