@@ -53,13 +53,30 @@ void loop()
         Serial.println(WiFi.localIP());
     }
 
-    // Get display type
-    char url[96];
-    sprintf(url, "%sid=%s&key=%s", url_base, id, "type");
+    char url[128];
 
+    // Get scheduling info
+    int outdated = 1;
+    sprintf(url, "%s?token=%s&action=next", url_base, id);
+    const String &next = http_get(url, nullptr);
+    outdated = next.indexOf("\"outdated\":");
+    outdated = outdated < 0 || next[outdated + 11] != 'f';
+
+    // If key is pressed, force display refresh
+    if (!outdated) {
+        pmic_init();
+        if (pmic_get_key()) {
+            outdated = 1;
+            // Need to re-init EPD GPIOs
+            epd_init();
+        }
+    }
+
+    // Get display type
     const epd_func_t *epd_func = 0;
-    {
-        String stype = http_get(url, nullptr);
+    if (outdated) {
+        sprintf(url, "%s?token=%s&action=peek&key=type", url_base, id);
+        const String &stype = http_get(url, nullptr);
         Serial.print("EPD: ");
         Serial.println(stype);
         if (stype.startsWith("epd_2in13_rwb_122x250"))
@@ -72,6 +89,7 @@ void loop()
             epd_func = epd_7in5_rwb4_640x384();
     }
 
+    // Refresh display
     if (epd_func) {
         epd_func->init();
         static const uint32_t block = 1024 * 4;
@@ -79,9 +97,9 @@ void loop()
         uint32_t len = 0;
         do {
             len = block;
-            sprintf(url, "%sid=%s&key=%s&ofs=%u&len=%u",
-                url_base, id, "data", ofs, len);
-            const String data = http_get(url, nullptr);
+            sprintf(url, "%s?token=%s&action=read&ofs=%u&len=%u",
+                url_base, id, ofs, len);
+            const String &data = http_get(url, nullptr);
             len = data.length();
             epd_func->update((const uint8_t *)data.c_str(), ofs, len);
             ofs += len;

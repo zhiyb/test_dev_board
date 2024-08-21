@@ -8,6 +8,8 @@
 WiFiClientSecure client;
 HTTPClient http;
 
+String s_null;
+
 void http_init(void)
 {
     client.setInsecure();
@@ -32,8 +34,12 @@ const String &http_get(const char *url, int *code)
     Serial.print(http.getSize());
 #endif
 
-    if (*code != HTTP_CODE_OK)
-        return String();
+    if (*code != HTTP_CODE_OK) {
+#if DEBUG_PRINT
+        Serial.println();
+#endif
+        return s_null;
+    }
     const String &resp = http.getString();
 #if DEBUG_PRINT
     Serial.print(" READ ");
@@ -65,8 +71,12 @@ const String &http_post(const char *url, int *code, const void *data, uint32_t l
     Serial.print(http.getSize());
 #endif
 
-    if (*code != HTTP_CODE_OK)
-        return String();
+    if (*code != HTTP_CODE_OK) {
+#if DEBUG_PRINT
+        Serial.println();
+#endif
+        return s_null;
+    }
     const String &resp = http.getString();
 #if DEBUG_PRINT
     Serial.print(" READ ");

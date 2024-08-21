@@ -3,7 +3,8 @@
 #include <Stream.h>
 #include <cstdint>
 
-static const char url_base[] = "https://zhiyb.me/nas/api/disp.php?";
+static const char url_base[] = "https://zhiyb.me/api/schd.php";
+static const char sensor_url_base[] = "https://zhiyb.me/api/sensor.php";
 extern char id[32];
 
 extern WiFiClientSecure client;
