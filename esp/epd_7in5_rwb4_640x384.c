@@ -60,19 +60,19 @@ static void epd_func_init(void)
     epd_data(0x00);
 
     epd_cmd(0x00); // PANEL_SETTING
-    epd_data(0xCF);
+    epd_data(0xcf);
     epd_data(0x08);
 
     epd_cmd(0x30); // PLL_CONTROL
-    epd_data(0x3A); // PLL:  0-15:0x3C, 15+:0x3A
+    epd_data(0x3c); // PLL:  0-15:0x3C, 15+:0x3A
 
     epd_cmd(0x82); // VCM_DC_SETTING
     epd_data(0x28); //all temperature  range
 
     epd_cmd(0x06); // BOOSTER_SOFT_START
-    epd_data (0xc7);
-    epd_data (0xcc);
-    epd_data (0x15);
+    epd_data(0xc7);
+    epd_data(0xcc);
+    epd_data(0x15);
 
     epd_cmd(0x50); // VCOM AND DATA INTERVAL SETTING
     epd_data(0x77);
