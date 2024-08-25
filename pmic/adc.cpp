@@ -38,8 +38,9 @@ static inline void adc_start_vcc(void)
 
 static inline void adc_disable(void)
 {
-    power_adc_disable();
     ADCSRA = 0;
+    ADMUX = 0;
+    power_adc_disable();
 }
 
 static inline void adc_cal(void)
