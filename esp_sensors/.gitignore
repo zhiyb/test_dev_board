@@ -1,0 +1,6 @@
+.vscode
+build
+
+*.bak
+
+wifi_network.h
