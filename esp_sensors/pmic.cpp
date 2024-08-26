@@ -1,7 +1,7 @@
-#include <cstdint>
 #include <ESP8266WiFi.h>
-#include <Wire.h>
+#include <cstdint>
 #include "pmic.h"
+#include "i2c.h"
 #include "http.h"
 
 #define I2C_ADDR    ((uint8_t)0x39)
@@ -26,74 +26,44 @@ typedef enum {
     I2cRegPicoScheduleSec1,
     I2cRegPicoScheduleSec2,
     I2cRegPicoScheduleSec3,
+    I2cRegPowerEn,
 } i2c_reg_t;
-
-static const unsigned int gpio_sda = 4;
-static const unsigned int gpio_scl = 5;
 
 static void pmic_write_multi(uint8_t reg, const uint8_t *buf, uint8_t len)
 {
-    Wire.beginTransmission(I2C_ADDR);
-    Wire.write(reg);
-    for (uint8_t i = 0; i < len; i++)
-        Wire.write(buf[i]);
-    Wire.endTransmission(true);
-    delayMicroseconds(10);
+    i2c_write_multi(I2C_ADDR, reg, buf, len);
 }
 
 static void pmic_write(uint8_t reg, uint8_t val)
 {
-    pmic_write_multi(reg, &val, 1);
+    i2c_write_reg(I2C_ADDR, reg, val);
 }
 
 static uint8_t pmic_read_multi(uint8_t reg, uint8_t *buf, uint8_t len)
 {
-    Wire.beginTransmission(I2C_ADDR);
-    Wire.write(reg);
-    Wire.endTransmission(false);
-
-    Wire.requestFrom(I2C_ADDR, (size_t)len, true);
-    uint8_t i = 0;
-    while (Wire.available()) {
-        buf[i] = Wire.read();
-        i += 1;
-    }
-    delayMicroseconds(10);
-    return i;
+    return i2c_read_multi(I2C_ADDR, reg, buf, len);
 }
 
 static uint8_t pmic_read(uint8_t reg)
 {
-    uint8_t v = 0;
-    pmic_read_multi(reg, &v, 1);
-    return v;
+    return i2c_read_reg(I2C_ADDR, reg);
 }
 
 void pmic_init(void)
 {
-    // Toggle SCL to release stuck I2C bus
-    digitalWrite(gpio_sda, LOW);
-    digitalWrite(gpio_scl, LOW);
-    pinMode(gpio_sda, INPUT);
-    pinMode(gpio_scl, INPUT);
-    delayMicroseconds(10);
-    for (int i = 0; i < 10; i++) {
-        pinMode(gpio_scl, OUTPUT);
-        delayMicroseconds(10);
-        pinMode(gpio_scl, INPUT);
-        delayMicroseconds(10);
-    }
+}
 
-    // Init I2C
-    Wire.pins(gpio_sda, gpio_scl);
-    Wire.begin();
-    Wire.setClock(400000);
+void pmic_power_enable(bool sensors)
+{
+    uint8_t en = pmic_read(I2cRegPowerEn);
+    en = (en & ~(1 << 2)) | (sensors << 2);
+    pmic_write(I2cRegPowerEn, en);
 }
 
 void pmic_shutdown(void)
 {
     // Shutdown everything
-    pmic_write(I2cRegState, 0);
+    pmic_write(I2cRegPowerEn, 0);
 }
 
 uint8_t pmic_get_key(void)
@@ -125,7 +95,7 @@ void pmic_update(void)
     http_get(url, nullptr);
 
     // Get next wakeup time
-    uint32_t schedule_sec = 30;
+    uint32_t schedule_secs = 30;
     sprintf(url, "%s?token=%s&action=next", url_base, id);
     const String &next = http_get(url, nullptr);
     int outdated = next.indexOf("\"outdated\":");
@@ -133,26 +103,32 @@ void pmic_update(void)
         // Error parsing outdated value
         // Wakeup again after 1 hour
         outdated = 1;
-        schedule_sec = 60 * 60;
+        schedule_secs = 60 * 60;
     } else if (next[outdated + 11] != 'f') {
         // Outdated now
         // Wakeup again after 30 seconds
         outdated = 1;
-        schedule_sec = 30;
+        schedule_secs = 30;
     } else {
         // Wait for next update
         int sec = next.indexOf("\"next_secs\":");
         if (sec < 0) {
             // Host missed update, check again after 1 hour
             outdated = sec;
-            schedule_sec = 60 * 60;
+            schedule_secs = 60 * 60;
         } else {
             // Add some offset to scheduled wakeup time as PMIC's clock may not be accurate
             outdated = 0;
             sec = next.substring(sec + 12).toInt();
-            schedule_sec = sec + 30;
+            schedule_secs = sec + 30;
         }
     }
-    pmic_write_multi(I2cRegEspScheduleSec0, (uint8_t *)&schedule_sec, 4);
-    Serial.printf("outdated=%d schedule=%d\n", outdated, schedule_sec);
+    pmic_write_multi(I2cRegEspScheduleSec0, (uint8_t *)&schedule_secs, 4);
+    Serial.printf("outdated=%d schedule=%d\n", outdated, schedule_secs);
+}
+
+void pmic_update(uint32_t schedule_secs)
+{
+    pmic_write_multi(I2cRegEspScheduleSec0, (uint8_t *)&schedule_secs, 4);
+    Serial.printf("schedule=%d\n", schedule_secs);
 }
