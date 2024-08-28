@@ -2,22 +2,24 @@
 
 #include <stdint.h>
 
-// pin ESP_EN:  PD4
-// pin PICO_EN: PD7
+// pin SENSORS_EN:  PD3
+// pin ESP_EN:      PD4
+// pin PICO_EN:     PD7
 
 #define DEV_INIT_PORTA_MASK  0
 #define DEV_INIT_PORTB_MASK  0
 #define DEV_INIT_PORTC_MASK  0
-#define DEV_INIT_PORTD_MASK  ((1 << 4))
+#define DEV_INIT_PORTD_MASK  (_BV(3) | _BV(4))
 
 #define DEV_INIT_DDRA_MASK   0
 #define DEV_INIT_DDRB_MASK   0
 #define DEV_INIT_DDRC_MASK   0
-#define DEV_INIT_DDRD_MASK   ((1 << 4) | (1 << 7))
+#define DEV_INIT_DDRD_MASK   (_BV(3) | _BV(4) | _BV(7))
 
 typedef enum {
     DevPico = 0,
     DevEsp,
+    DevSensors,
     NumDevs
 } dev_t;
 

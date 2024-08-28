@@ -13,21 +13,23 @@ static volatile struct {
     uint32_t start_tick;
     uint32_t enable_tick;
     bool scheduled;
-} devs[2];
+} devs[NumDevs];
+
+static uint8_t enabled = 0;
 
 bool dev_pwr_enabled(dev_t dev)
 {
-    switch (dev) {
-    case DevPico:
-        return !!(PORTD & _BV(7));
-    case DevEsp:
-        return !(PORTD & _BV(4));
-    }
-    return false;
+    return !!(enabled & _BV(dev));
 }
 
 void dev_pwr_en(dev_t dev, bool en)
 {
+    uint8_t prev_enabled = enabled;
+    if (en)
+        enabled |= _BV(dev);
+    else
+        enabled &= ~_BV(dev);
+
     switch (dev) {
     case DevPico:
         if (en)
@@ -43,11 +45,18 @@ void dev_pwr_en(dev_t dev, bool en)
             PORTD |= _BV(4);
         led_set(LedRed, en);
         break;
+    case DevSensors:
+        if (en)
+            PORTD &= ~_BV(3);
+        else
+            PORTD |= _BV(3);
+        led_set(LedBlue, en);
+        break;
     }
     devs[dev].enable_tick = wdt_tick();
 
-    // Trigger ADC if enabling any controller
-    if (en)
+    // Trigger ADC if starting any controller
+    if (en && !prev_enabled)
         adc_start();
 }
 

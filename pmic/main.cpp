@@ -41,7 +41,6 @@ void init()
     key_init();
     timer0_init();
     wdt_init();
-    sei();
 }
 
 int main()
@@ -51,6 +50,8 @@ int main()
     uint8_t boot_mode = eeprom_read_byte(&eeprom_data->boot_mode);
     dev_pwr_en(DevPico, boot_mode & 1);
     dev_pwr_en(DevEsp, boot_mode & 2);
+    dev_pwr_en(DevSensors, false);
+    sei();
 
     for (;;) {
         static uint8_t prev_key = 0;

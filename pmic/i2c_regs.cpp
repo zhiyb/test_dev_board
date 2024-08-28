@@ -25,6 +25,7 @@ typedef enum {
     I2cRegPicoScheduleSec1,
     I2cRegPicoScheduleSec2,
     I2cRegPicoScheduleSec3,
+    I2cRegPowerEn,
 } i2c_reg_t;
 
 uint32_t buf;
@@ -73,6 +74,11 @@ void i2c_slave_regs_write(uint8_t reg, uint8_t val)
     case I2cRegState:
         dev_pwr_en(DevPico, val & 1);
         dev_pwr_en(DevEsp, val & 2);
+        break;
+    case I2cRegPowerEn:
+        dev_pwr_en(DevPico, val & 1);
+        dev_pwr_en(DevEsp, val & 2);
+        dev_pwr_en(DevSensors, val & 4);
         break;
     case I2cRegBootMode:
         eeprom_update_byte(&eeprom_data->boot_mode, val);
