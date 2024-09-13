@@ -48,7 +48,7 @@
         "silk_text_thickness": 0.15,
         "silk_text_upright": false,
         "zones": {
-          "min_clearance": 0.5
+          "min_clearance": 0.254
         }
       },
       "diff_pair_dimensions": [
@@ -61,11 +61,13 @@
       "drc_exclusions": [
         "courtyards_overlap|110463001|64700001|85a319a5-7a2a-4639-a2cc-479d0d986de1|dbbee002-1697-4f77-bd01-56e07cf18173",
         "courtyards_overlap|41936999|64700001|00ad733d-ab04-45c5-a783-222f30eeff59|dbbee002-1697-4f77-bd01-56e07cf18173",
+        "courtyards_overlap|91338001|85195001|aea104dd-6094-4eba-beb1-f756fb5a9985|c6c611e2-f038-4ab1-84af-de5a19faa6a5",
         "silk_edge_clearance|115732198|56552000|8a66d34e-76c7-4019-bc8f-4a01fddf6e89|5dd5dc80-b076-439f-a760-ca5ede29a6e3",
         "silk_edge_clearance|116133000|56945536|8a66d34e-76c7-4019-bc8f-4a01fddf6e89|ea63ed50-9a4f-4600-ba1f-a54ebd3a6d34",
         "silk_edge_clearance|36257000|56957452|0d6e4415-8542-44cb-8cf7-b9c15d8578b8|931ae564-b119-4a49-b729-4388da6c95fd",
         "silk_edge_clearance|36649495|56567000|0d6e4415-8542-44cb-8cf7-b9c15d8578b8|200f2900-75eb-44e8-a220-5d710a5ff665",
-        "silk_over_copper|71056543|83418012|09f2e73a-7bab-4eef-a10b-04c555703624|00000000-0000-0000-0000-000000000000"
+        "silk_over_copper|55196715|83715788|09f2e73a-7bab-4eef-a10b-04c555703624|00000000-0000-0000-0000-000000000000",
+        "silk_over_copper|61683340|86700000|424795e4-801f-4d7c-a92f-5e1359046aeb|00000000-0000-0000-0000-000000000000"
       ],
       "meta": {
         "version": 2
@@ -595,7 +597,7 @@
       "gencad": "",
       "idf": "",
       "netlist": "",
-      "plot": "",
+      "plot": "gerbers/",
       "pos_files": "",
       "specctra_dsn": "",
       "step": "",
@@ -656,11 +658,53 @@
           "label": "DNP",
           "name": "${DNP}",
           "show": true
+        },
+        {
+          "group_by": false,
+          "label": "#",
+          "name": "${ITEM_NUMBER}",
+          "show": false
+        },
+        {
+          "group_by": false,
+          "label": "Height",
+          "name": "Height",
+          "show": false
+        },
+        {
+          "group_by": false,
+          "label": "Manufacturer_Name",
+          "name": "Manufacturer_Name",
+          "show": false
+        },
+        {
+          "group_by": false,
+          "label": "Manufacturer_Part_Number",
+          "name": "Manufacturer_Part_Number",
+          "show": false
+        },
+        {
+          "group_by": false,
+          "label": "Mouser Part Number",
+          "name": "Mouser Part Number",
+          "show": false
+        },
+        {
+          "group_by": false,
+          "label": "Mouser Price/Stock",
+          "name": "Mouser Price/Stock",
+          "show": false
+        },
+        {
+          "group_by": false,
+          "label": "Description",
+          "name": "Description",
+          "show": false
         }
       ],
       "filter_string": "",
       "group_symbols": true,
-      "name": "Grouped By Value",
+      "name": "",
       "sort_asc": true,
       "sort_field": "Reference"
     },
