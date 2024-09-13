@@ -1,0 +1,97 @@
+(kicad_sch
+	(version 20231120)
+	(generator "eeschema")
+	(generator_version "8.0")
+	(uuid "04706eb9-2bc4-42ee-95fb-1daba0e75bf5")
+	(paper "A4")
+	(title_block
+		(title "STM32F722RETx dev board")
+		(date "2024-09-06")
+	)
+	(lib_symbols)
+	(label "3V3_SCL"
+		(at 127 83.82 180)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "08555398-17b1-42da-867f-c614e517c652")
+	)
+	(label "3V3_SDA"
+		(at 127 81.28 180)
+		(fields_autoplaced yes)
+		(effects
+			(font
+				(size 1.27 1.27)
+			)
+			(justify right bottom)
+		)
+		(uuid "a360f031-8000-4bdb-b5fd-7355b3e18f24")
+	)
+	(sheet
+		(at 127 76.2)
+		(size 25.4 25.4)
+		(fields_autoplaced yes)
+		(stroke
+			(width 0.1524)
+			(type solid)
+		)
+		(fill
+			(color 0 0 0 0.0000)
+		)
+		(uuid "381ae97c-cbe5-4408-9ec3-06ec3e6dd5a6")
+		(property "Sheetname" "STM32F7"
+			(at 127 75.4884 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left bottom)
+			)
+		)
+		(property "Sheetfile" "stm32f7.kicad_sch"
+			(at 127 102.1846 0)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left top)
+			)
+		)
+		(pin "3V3_SCL" bidirectional
+			(at 127 83.82 180)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+			(uuid "f3f7f038-6a83-4c22-9897-8186193d6baa")
+		)
+		(pin "3V3_SDA" bidirectional
+			(at 127 81.28 180)
+			(effects
+				(font
+					(size 1.27 1.27)
+				)
+				(justify left)
+			)
+			(uuid "c9ab1f6e-0247-4bf0-b4e6-3648a1b2cee4")
+		)
+		(instances
+			(project "pcb_stm32f7"
+				(path "/04706eb9-2bc4-42ee-95fb-1daba0e75bf5"
+					(page "6")
+				)
+			)
+		)
+	)
+	(sheet_instances
+		(path "/"
+			(page "1")
+		)
+	)
+)

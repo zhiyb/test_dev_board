@@ -1,0 +1,9 @@
+EESchema-DOCLIB  Version 2.0
+#
+$CMP MSL0104RGBU1
+D Red, Green, Blue (RGB) 624nm Red, 527nm Green, 470nm Blue LED Indication - Discrete 2.1V Red, 3.3V Green, 3.2V Blue 7-SMD, Flat Lead 
+K
+F https://fscdn.rohm.com/en/products/databook/datasheet/opto/led/chip_multi/msl0104rgbu1-e.pdf
+$ENDCMP
+#
+#End Doc Library

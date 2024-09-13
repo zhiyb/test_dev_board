@@ -1,0 +1,28 @@
+EESchema-LIBRARY Version 2.3
+#encoding utf-8
+#SamacSys ECAD Model MSL0104RGBU1
+#/345774/1181558/2.50/7/3/LED (Multiple)
+DEF MSL0104RGBU1 LED 0 30 Y Y 1 F N
+F0 "LED" 950 300 50 H V L CNN
+F1 "MSL0104RGBU1" 950 200 50 H V L CNN
+F2 "MSL0104RGBU1" 950 100 50 H I L CNN
+F3 "https://fscdn.rohm.com/en/products/databook/datasheet/opto/led/chip_multi/msl0104rgbu1-e.pdf" 950 0 50 H I L CNN
+F4 "Red, Green, Blue (RGB) 624nm Red, 527nm Green, 470nm Blue LED Indication - Discrete 2.1V Red, 3.3V Green, 3.2V Blue 7-SMD, Flat Lead " 950 -100 50 H I L CNN "Description"
+F5 "2.35" 950 -200 50 H I L CNN "Height"
+F6 "755-MSL0104RGBU1" 950 -300 50 H I L CNN "Mouser Part Number"
+F7 "https://www.mouser.co.uk/ProductDetail/ROHM-Semiconductor/MSL0104RGBU1?qs=%2FPVulymFwT0fF2uiK7i8gg%3D%3D" 950 -400 50 H I L CNN "Mouser Price/Stock"
+F8 "ROHM Semiconductor" 950 -500 50 H I L CNN "Manufacturer_Name"
+F9 "MSL0104RGBU1" 950 -600 50 H I L CNN "Manufacturer_Part_Number"
+DRAW
+X A_R_1 1 1100 0 200 L 50 50 0 0 P
+X A_G 2 0 0 200 R 50 50 0 0 P
+X K_G 3 0 -100 200 R 50 50 0 0 P
+X K_R 4 0 -200 200 R 50 50 0 0 P
+X K_B 5 0 -300 200 R 50 50 0 0 P
+X A_B 6 0 -400 200 R 50 50 0 0 P
+X A_R_2 7 1100 -100 200 L 50 50 0 0 P
+P 5 0 1 6 200 100 900 100 900 -500 200 -500 200 100 N
+ENDDRAW
+ENDDEF
+#
+#End Library
