@@ -14017,8 +14017,8 @@
 			)
 		)
 	)
-	(gr_text "RCI \nGON"
-		(at 111.506 66.167 -90)
+	(gr_text "GON\nRCI"
+		(at 111.506 66.167 270)
 		(layer "F.SilkS")
 		(uuid "cd933667-0f0b-4db7-9c85-6682031baafb")
 		(effects
