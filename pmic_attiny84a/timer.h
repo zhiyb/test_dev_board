@@ -1,6 +1,5 @@
 #pragma once
 
-// Timer0: Key debouncing and LED activity light
-void timer0_init(void);
-void timer0_restart(void);
-bool timer0_enabled(void);
+// Timer1: Key debouncing and LED activity light
+void timer1_restart(void);
+bool timer1_enabled(void);

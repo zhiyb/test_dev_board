@@ -36,7 +36,7 @@ uint8_t i2c_slave_regs_read(uint8_t reg)
     case I2cRegId:
         return 0x5d;
     case I2cRegState:
-        return dev_pwr_enabled(DevPico) | (dev_pwr_enabled(DevEsp) << 1) |
+        return dev_pwr_enabled(DevAux) | (dev_pwr_enabled(DevEsp) << 1) |
             (key_state() << 2) | ((!adc_busy()) << 4);
     case I2cRegBootMode:
         return eeprom_read_byte(&eeprom_data->boot_mode);
@@ -72,13 +72,12 @@ void i2c_slave_regs_write(uint8_t reg, uint8_t val)
 {
     switch (reg) {
     case I2cRegState:
-        dev_pwr_en(DevPico, val & 1);
+        dev_pwr_en(DevAux, val & 1);
         dev_pwr_en(DevEsp, val & 2);
         break;
     case I2cRegPowerEn:
-        dev_pwr_en(DevPico, val & 1);
+        dev_pwr_en(DevAux, val & 1);
         dev_pwr_en(DevEsp, val & 2);
-        dev_pwr_en(DevSensors, val & 4);
         break;
     case I2cRegBootMode:
         eeprom_update_byte(&eeprom_data->boot_mode, val);
@@ -94,7 +93,7 @@ void i2c_slave_regs_write(uint8_t reg, uint8_t val)
     case I2cRegPicoScheduleSec3:
         buf = (buf >> 8) | ((uint32_t)val << 24);
         if (reg == I2cRegPicoScheduleSec3)
-            dev_schedule_sec(DevPico, buf);
+            dev_schedule_sec(DevAux, buf);
         else if (reg == I2cRegEspScheduleSec3)
             dev_schedule_sec(DevEsp, buf);
         break;

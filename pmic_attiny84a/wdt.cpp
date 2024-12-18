@@ -40,7 +40,7 @@ uint32_t wdt_sec_to_ticks(uint32_t secs)
     return ticks;
 }
 
-ISR(WDT_vect)
+ISR(WATCHDOG_vect)
 {
     tick += 1;
     dev_wdt_irq(tick);

@@ -3,6 +3,7 @@
 #include "led.h"
 #include "adc.h"
 #include "wdt.h"
+#include "i2c.h"
 #include "eeprom.h"
 
 // Automatically restart a device after some time if it was timed out
@@ -30,34 +31,39 @@ void dev_pwr_en(dev_t dev, bool en)
     else
         enabled &= ~_BV(dev);
 
+    // Enable 3v3 and I2C peripheral first if any devices are being enabled
+    if (!prev_enabled && en) {
+        // Trigger ADC conversions too
+        adc_start();
+        PORTA |= _BV(3);
+        i2c_slave_init();
+    }
+
     switch (dev) {
-    case DevPico:
+    case DevAux:
         if (en)
-            PORTD |= _BV(7);
+            PORTA &= ~_BV(1);
         else
-            PORTD &= ~_BV(7);
+            PORTA |= _BV(1);
         led_set(LedBlue, en);
         break;
     case DevEsp:
         if (en)
-            PORTD &= ~_BV(4);
+            PORTA &= ~_BV(2);
         else
-            PORTD |= _BV(4);
+            PORTA |= _BV(2);
         led_set(LedRed, en);
         break;
-    case DevSensors:
-        if (en)
-            PORTD &= ~_BV(3);
-        else
-            PORTD |= _BV(3);
-        led_set(LedBlue, en);
-        break;
     }
-    devs[dev].enable_tick = wdt_tick();
 
-    // Trigger ADC if starting any controller
-    if (en && !prev_enabled)
-        adc_start();
+    // Check if all devices have been disabled
+    if (prev_enabled && !enabled) {
+        i2c_slave_deinit();
+        PORTA &= ~_BV(3);
+    }
+
+    // Record device enabled time
+    devs[dev].enable_tick = wdt_tick();
 }
 
 void dev_wdt_irq(uint32_t tick)
@@ -69,7 +75,7 @@ void dev_wdt_irq(uint32_t tick)
         if (dev_pwr_enabled(dev)) {
             // Device enabled, check for turn-off timeout
             uint16_t *p = 0;
-            if (dev == DevPico)
+            if (dev == DevAux)
                 p = &eeprom_data->pico_timeout_sec;
             else if (dev == DevEsp)
                 p = &eeprom_data->esp_timeout_sec;

@@ -3,7 +3,7 @@ import argparse
 import struct
 
 # Bandgap voltage
-vbg = 1.090
+vbg = 1.075
 # EEPROM & PICO power timeout seconds
 esp_timeout_sec = 120
 pico_timeout_sec = 120

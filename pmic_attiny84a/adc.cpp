@@ -19,8 +19,8 @@ static uint8_t adc_count;
 static inline void adc_start_temp(void)
 {
     // Start temperature measurement
-    // Internal 1.1V reference, right adjusted, channel 8
-    ADMUX = _BV(REFS1) | _BV(REFS0) | 8;
+    // Internal 1.1V reference, channel 8
+    ADMUX = _BV(REFS1) | 0b100010;
     // Max resolution requires ADC clock between 50 kHz and 200 kHz
     // Start ADC, interrupt, prescaler = DIV128
     ADCSRA = _BV(ADEN) | _BV(ADSC) | _BV(ADIF) | _BV(ADIE) | _BV(ADPS2) | _BV(ADPS1) | _BV(ADPS0);
@@ -29,8 +29,8 @@ static inline void adc_start_temp(void)
 static inline void adc_start_vcc(void)
 {
     // Start AVcc measurement
-    // AVcc reference, right adjusted, channel 1.1V VBG
-    ADMUX = _BV(REFS0) | 0b1110;
+    // Vcc reference, channel 1.1V VBG
+    ADMUX = 0b100001;
     // Max resolution requires ADC clock between 50 kHz and 200 kHz
     // Start ADC, interrupt, prescaler = DIV128
     ADCSRA = _BV(ADEN) | _BV(ADSC) | _BV(ADIF) | _BV(ADIE) | _BV(ADPS2) | _BV(ADPS1) | _BV(ADPS0);
