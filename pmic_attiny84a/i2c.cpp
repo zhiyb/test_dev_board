@@ -201,7 +201,7 @@ static uint8_t i2c_master_read(bool ack)
     return v;
 }
 
-bool i2c_master_write(uint8_t addr, uint8_t *src, uint8_t len)
+bool i2c_master_write(uint8_t addr, const uint8_t *src, uint8_t len)
 {
     bool ack = false;
     i2c_master_start();

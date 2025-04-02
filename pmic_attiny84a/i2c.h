@@ -21,7 +21,7 @@ uint8_t i2c_slave_regs_read(uint8_t reg);
 
 void i2c_master_init(void);
 void i2c_master_init_resync(void);
-bool i2c_master_write(uint8_t addr, uint8_t *src, uint8_t len);
+bool i2c_master_write(uint8_t addr, const uint8_t *src, uint8_t len);
 bool i2c_master_read(uint8_t addr, uint8_t *dst, uint8_t len);
 
 void i2c_deinit(void);

@@ -64,8 +64,7 @@ void dev_pwr_en(dev_t dev, bool en)
     }
 
     // Record device enabled time
-    if (dev < NumDevs)
-        devs[dev].enable_tick = wdt_tick();
+    devs[dev].enable_tick = wdt_tick();
 }
 
 void dev_wdt_irq(uint32_t tick)

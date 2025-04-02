@@ -12,6 +12,7 @@
 #include "timer.h"
 #include "wdt.h"
 #include "eeprom.h"
+#include "sht.h"
 
 void init()
 {
@@ -35,50 +36,14 @@ int main()
 {
     init();
 
-#if 1
-    // SHT40 sensor
-    uint8_t addr = 0x44;
-    dev_pwr_en(DevSHT, true);
-    i2c_master_init();
-
-    // Power-up time 1ms
-    timer1_restart_ms(1);
-    timer1_wait_sleep();
-    i2c_master_init_resync();
-
-#if 0
-    // Read serial number
-    uint8_t cmd = 0x89;
-    if (i2c_master_write(addr, &cmd, 1)) {
-        uint8_t buf[6];
-        for (uint8_t i = 0; i < 100; i++)
-            if (i2c_master_read(addr, &buf[0], 6))
-                break;
-    }
-#endif
-
-    // Measure T & RH with high precision
-    uint8_t cmd = 0xfd;
-    if (i2c_master_write(addr, &cmd, 1)) {
-        timer1_restart_ms(8);
-        timer1_wait_sleep();
-
-        uint8_t buf[6];
-        for (uint8_t i = 0; i < 200; i++) {
-            if (i2c_master_read(addr, &buf[0], 6))
-                break;
-            timer1_restart_ms(1);
-            timer1_wait_sleep();
-        }
-    }
-
-    i2c_deinit();
-#endif
-
-
     uint8_t boot_mode = eeprom_read_byte(&eeprom_data->boot_mode);
+    boot_mode = 0;
     dev_pwr_en(DevAux, boot_mode & 1);
     dev_pwr_en(DevEsp, boot_mode & 2);
+
+#if 1
+    sht_trigger_update();
+#endif
 
     for (;;) {
         // Select appropriate sleep mode and go to sleep

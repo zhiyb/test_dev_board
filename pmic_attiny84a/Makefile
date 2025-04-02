@@ -1,7 +1,7 @@
 # Author: Norman Zhi (normanzyb@gmail.com)
 
 TRG	= pmic
-SRC	= main.cpp led.cpp key.cpp dev.cpp i2c.cpp i2c_regs.cpp adc.cpp timer1.cpp wdt.cpp
+SRC	= main.cpp led.cpp key.cpp dev.cpp i2c.cpp i2c_regs.cpp adc.cpp timer1.cpp wdt.cpp sht.cpp
 
 MCU_TARGET	= attiny84a
 MCU_FREQ	= 8000000
@@ -30,8 +30,8 @@ OBJDUMP	= $(CROSS_COMPILE)objdump
 
 AVRDUDE	= sudo avrdude
 
-CPPFLAGS	= -mmcu=$(MCU_TARGET) $(OPTIMIZE) $(DEFS)
-LDFLAGS		= -mmcu=$(MCU_TARGET) $(OPTIMIZE)
+CPPFLAGS	= -mmcu=$(MCU_TARGET) -std=gnu++11 $(OPTIMIZE) $(DEFS)
+LDFLAGS		= -mmcu=$(MCU_TARGET) -std=gnu++11 $(OPTIMIZE)
 LIBS		=
 
 .PHONY: all
