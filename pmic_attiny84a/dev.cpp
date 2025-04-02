@@ -36,7 +36,6 @@ void dev_pwr_en(dev_t dev, bool en)
         // Trigger ADC conversions too
         adc_start();
         PORTA |= _BV(3);
-        i2c_slave_init();
     }
 
     switch (dev) {
@@ -48,22 +47,25 @@ void dev_pwr_en(dev_t dev, bool en)
         led_set(LedBlue, en);
         break;
     case DevEsp:
-        if (en)
+        if (en) {
+            i2c_slave_init();
             PORTA &= ~_BV(2);
-        else
+        } else {
             PORTA |= _BV(2);
+            i2c_deinit();
+        }
         led_set(LedRed, en);
         break;
     }
 
     // Check if all devices have been disabled
     if (prev_enabled && !enabled) {
-        i2c_slave_deinit();
         PORTA &= ~_BV(3);
     }
 
     // Record device enabled time
-    devs[dev].enable_tick = wdt_tick();
+    if (dev < NumDevs)
+        devs[dev].enable_tick = wdt_tick();
 }
 
 void dev_wdt_irq(uint32_t tick)

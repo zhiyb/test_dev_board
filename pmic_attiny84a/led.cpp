@@ -32,7 +32,7 @@ void led_set(led_t led, bool on)
 void led_act_trigger(void)
 {
     led_set(LedGreen, true);
-    timer1_restart();
+    timer1_restart_debouncing();
 }
 
 void led_act_off(void)

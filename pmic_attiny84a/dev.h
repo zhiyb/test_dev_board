@@ -15,7 +15,8 @@
 typedef enum {
     DevAux = 0,
     DevEsp,
-    NumDevs
+    DevSHT,
+    NumDevs,
 } dev_t;
 
 bool dev_pwr_enabled(dev_t dev);

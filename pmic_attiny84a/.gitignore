@@ -6,3 +6,4 @@ flash.sh
 *.elf
 *.bin
 *.hex
+debug/
