@@ -22,7 +22,7 @@ void timer1_restart_ms(uint8_t ms)
     TCNT1 = 0;
     // Configure timer period
     uint16_t cnt = F_CPU / 1000 / 64;
-    cnt = (cnt * ms + (1024 / 64 - 1)) / (1024 / 64);
+    cnt = (cnt * ms + (1024 / 64 - 1)) / (1024 / 64) - 1;
     OCR1A = cnt - 1;
 
     // Enable interrupt
@@ -51,7 +51,7 @@ void timer1_restart_debouncing(void)
     TCNT1 = 0;
     // Configure timer period
     uint16_t cnt = F_CPU / 1000 / 64;
-    cnt = (cnt * ms + (1024 / 64 - 1)) / (1024 / 64);
+    cnt = (cnt * ms + (1024 / 64 - 1)) / (1024 / 64) - 1;
     OCR1A = cnt - 1;
 
     // Enable interrupt

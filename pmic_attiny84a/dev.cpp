@@ -155,6 +155,8 @@ uint8_t dev_pwr_state(void)
 
 void dev_wdt_irq(uint32_t tick)
 {
+    sht_trigger_update();
+
     for (dev_t dev = (dev_t)0; dev < NumDevs; dev = (dev_t)(dev + 1)) {
         if (!devs[dev].scheduled)
             continue;
