@@ -14,6 +14,9 @@
 #include "eeprom.h"
 #include "sht.h"
 
+#define STACK_MAGIC 0x5a
+uint8_t stack_magic __attribute__ ((section (".noinit")));
+
 void init()
 {
     // Disable all modules by default
@@ -24,6 +27,8 @@ void init()
 
     DDRA = LED_INIT_DDRA_MASK | DEV_INIT_DDRA_MASK | KEY_INIT_DDRA_MASK | I2C_INIT_DDRA_MASK;
     DDRB = LED_INIT_DDRB_MASK | DEV_INIT_DDRB_MASK | KEY_INIT_DDRB_MASK | I2C_INIT_DDRB_MASK;
+
+    stack_magic = STACK_MAGIC;
 
     adc_start();
     key_init();
@@ -44,6 +49,20 @@ int main()
         dev_pwr_req(DevEsp, true);
 
     for (;;) {
+        if (stack_magic != STACK_MAGIC) {
+            // Stack overflow!
+            cli();
+            led_set(LedBlue, false);
+            for (;;) {
+                led_set(LedRed, true);
+                led_set(LedGreen, true);
+                _delay_ms(50);
+                led_set(LedRed, false);
+                led_set(LedGreen, false);
+                _delay_ms(100);
+            }
+        }
+
         cli();
         if (dev_pwr_req_pending()) {
             // Process pending power requests with interrupts enabled

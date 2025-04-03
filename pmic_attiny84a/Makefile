@@ -30,12 +30,12 @@ OBJDUMP	= $(CROSS_COMPILE)objdump
 
 AVRDUDE	= sudo avrdude
 
-CPPFLAGS	= -mmcu=$(MCU_TARGET) -std=gnu++11 $(OPTIMIZE) $(DEFS)
-LDFLAGS		= -mmcu=$(MCU_TARGET) -std=gnu++11 $(OPTIMIZE)
+CPPFLAGS	= -mmcu=$(MCU_TARGET) -std=gnu++11 $(OPTIMIZE) $(DEFS) #-fstack-usage
+LDFLAGS		= -mmcu=$(MCU_TARGET) -std=gnu++11 $(OPTIMIZE) #-Wl,--verbose
 LIBS		=
 
 .PHONY: all
-all: $(TRG).hex eeprom.bin
+all: $(TRG).elf $(TRG).hex eeprom.bin
 
 %.hex: %.elf
 	$(OBJCOPY) -j .text -j .data -O ihex $< $@
