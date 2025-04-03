@@ -1,10 +1,13 @@
 #include <avr/io.h>
+#include <avr/interrupt.h>
+#include <util/atomic.h>
 #include "dev.h"
 #include "led.h"
 #include "adc.h"
 #include "wdt.h"
 #include "i2c.h"
 #include "eeprom.h"
+#include "sht.h"
 
 // Automatically restart a device after some time if it was timed out
 static const uint32_t timeout_reschedule_sec = 60 * 60;
@@ -16,55 +19,138 @@ static volatile struct {
     bool scheduled;
 } devs[NumDevs];
 
+static volatile uint8_t power_on_req = 0;
+static volatile uint8_t power_off_req = 0;
 static uint8_t enabled = 0;
 
-bool dev_pwr_enabled(dev_t dev)
-{
-    return !!(enabled & _BV(dev));
-}
-
-void dev_pwr_en(dev_t dev, bool en)
+static inline void dev_pwr_enable(dev_t dev)
 {
     uint8_t prev_enabled = enabled;
-    if (en)
-        enabled |= _BV(dev);
-    else
-        enabled &= ~_BV(dev);
+    enabled |= _BV(dev);
 
     // Enable 3v3 and I2C peripheral first if any devices are being enabled
-    if (!prev_enabled && en) {
+    if (!prev_enabled) {
         // Trigger ADC conversions too
         adc_start();
+        // Enable 3v3
         PORTA |= _BV(3);
-    }
-
-    switch (dev) {
-    case DevAux:
-        if (en)
-            PORTA &= ~_BV(1);
+        // Initialise I2C interface
+        if (dev == DevSHT)
+            i2c_master_init();
         else
-            PORTA |= _BV(1);
-        led_set(LedBlue, en);
-        break;
-    case DevEsp:
-        if (en) {
             i2c_slave_init();
-            PORTA &= ~_BV(2);
-        } else {
-            PORTA |= _BV(2);
-            i2c_deinit();
-        }
-        led_set(LedRed, en);
-        break;
-    }
-
-    // Check if all devices have been disabled
-    if (prev_enabled && !enabled) {
-        PORTA &= ~_BV(3);
     }
 
     // Record device enabled time
     devs[dev].enable_tick = wdt_tick();
+
+    switch (dev) {
+    case DevAux:
+        PORTA &= ~_BV(1);
+        led_set(LedBlue, true);
+        break;
+    case DevEsp:
+        PORTA &= ~_BV(2);
+        led_set(LedRed, true);
+        break;
+    case DevSHT:
+        sht_powered_on();
+        break;
+    }
+}
+
+static inline void dev_pwr_disable(dev_t dev)
+{
+    switch (dev) {
+    case DevAux:
+        PORTA |= _BV(1);
+        led_set(LedBlue, false);
+        break;
+    case DevEsp:
+        PORTA |= _BV(2);
+        led_set(LedRed, false);
+        break;
+    }
+
+    enabled &= ~_BV(dev);
+    // Check if all devices have been disabled
+    if (!enabled) {
+        i2c_deinit();
+        PORTA &= ~_BV(3);
+    }
+}
+
+void dev_pwr_req(dev_t dev, bool en)
+{
+    uint8_t mask = _BV(dev);
+    // Use ATOMIC_RESTORESTATE as this function may be called from ISR
+    ATOMIC_BLOCK(ATOMIC_RESTORESTATE) {
+        if (en) {
+            power_on_req |= mask;
+            power_off_req &= ~mask;
+        } else {
+            power_on_req &= ~mask;
+            power_off_req |= mask;
+        }
+    }
+    led_act_trigger();
+}
+
+bool dev_pwr_req_pending(void)
+{
+    return power_on_req | power_off_req;
+}
+
+void dev_pwr_req_proc(void)
+{
+    uint8_t on_req, off_req;
+    ATOMIC_BLOCK(ATOMIC_FORCEON) {
+        on_req = power_on_req;
+        power_on_req = 0;
+        off_req = power_off_req;
+        power_off_req = 0;
+    }
+    on_req &= ~enabled;
+    off_req &= enabled;
+
+    // Process power off requests first
+    for (uint8_t dev = 0; dev < NumDevs; dev++)
+        if (_BV(dev) & off_req)
+            dev_pwr_disable((dev_t)dev);
+
+    // Process power on requests
+    // SHT sensor and other are exclusive
+    if (enabled & _BV(DevSHT)) {
+        // SHT sensor already on, cannot power on any other devices
+    } else if (enabled & ~_BV(DevSHT)) {
+        // Cannot power on SHT
+        for (uint8_t dev = 0; dev < DevSHT; dev++)
+            if (on_req & _BV(dev))
+                dev_pwr_enable((dev_t)dev);
+        on_req &= _BV(DevSHT);
+    } else if (on_req & _BV(DevSHT)) {
+        // SHT sensor takes priority
+        dev_pwr_enable(DevSHT);
+        on_req &= ~_BV(DevSHT);
+    } else {
+        for (uint8_t dev = 0; dev < DevSHT; dev++)
+            if (on_req & _BV(dev))
+                dev_pwr_enable((dev_t)dev);
+        on_req = 0;
+    }
+
+    // Re-queue pending power on requests
+    if (on_req) {
+        ATOMIC_BLOCK(ATOMIC_FORCEON) {
+            on_req &= ~power_off_req;
+            power_on_req |= on_req;
+        }
+    }
+}
+
+uint8_t dev_pwr_state(void)
+{
+    return enabled;
 }
 
 void dev_wdt_irq(uint32_t tick)
@@ -73,7 +159,7 @@ void dev_wdt_irq(uint32_t tick)
         if (!devs[dev].scheduled)
             continue;
 
-        if (dev_pwr_enabled(dev)) {
+        if (enabled & _BV(dev)) {
             // Device enabled, check for turn-off timeout
             uint16_t *p = 0;
             if (dev == DevAux)
@@ -85,7 +171,7 @@ void dev_wdt_irq(uint32_t tick)
             uint32_t delta = tick - devs[dev].enable_tick;
             if (delta >= timeout_ticks) {
                 // Timed out, reschedule after some time
-                dev_pwr_en(dev, false);
+                dev_pwr_req(dev, false);
                 devs[dev].schedule_ticks = wdt_sec_to_ticks(timeout_reschedule_sec);
                 devs[dev].scheduled = true;
             }
@@ -95,7 +181,7 @@ void dev_wdt_irq(uint32_t tick)
             uint32_t delta = tick - devs[dev].start_tick;
             if (delta >= devs[dev].schedule_ticks) {
                 devs[dev].scheduled = false;
-                dev_pwr_en(dev, true);
+                dev_pwr_req(dev, true);
             }
         }
     }

@@ -21,12 +21,14 @@ static uint8_t retry;
 
 void sht_trigger_update(void)
 {
-    // Power on and wait 1ms
-    dev_pwr_en(DevSHT, true);
-    i2c_master_init();
+    dev_pwr_req(DevSHT, true);
+}
+
+void sht_powered_on(void)
+{
+    // Power on wait time 1ms
     state = StatePowerOn;
     timer1_restart_ms(1);
-    led_act_trigger();
 }
 
 void sht_timer_irq(void)
@@ -63,6 +65,5 @@ void sht_timer_irq(void)
         break;
     }
 
-    i2c_deinit();
-    dev_pwr_en(DevSHT, false);
+    dev_pwr_req(DevSHT, false);
 }

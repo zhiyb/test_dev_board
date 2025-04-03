@@ -35,27 +35,31 @@ void init()
 int main()
 {
     init();
+    sht_trigger_update();
 
     uint8_t boot_mode = eeprom_read_byte(&eeprom_data->boot_mode);
-    boot_mode = 0;
-    dev_pwr_en(DevAux, boot_mode & 1);
-    dev_pwr_en(DevEsp, boot_mode & 2);
-
-#if 1
-    sht_trigger_update();
-#endif
+    if (boot_mode & 1)
+        dev_pwr_req(DevAux, true);
+    if (boot_mode & 2)
+        dev_pwr_req(DevEsp, true);
 
     for (;;) {
-        // Select appropriate sleep mode and go to sleep
         cli();
-        uint8_t sleep = SLEEP_MODE_PWR_DOWN;
-        if (dev_pwr_enabled(DevAux) | dev_pwr_enabled(DevEsp) | timer1_enabled())
-            sleep = SLEEP_MODE_IDLE;    // Some controllers still powered on
-        set_sleep_mode(sleep);
-        sleep_enable();
-        sei();
-        sleep_cpu();
-        sleep_disable();
+        if (dev_pwr_req_pending()) {
+            // Process pending power requests with interrupts enabled
+            sei();
+            dev_pwr_req_proc();
+        } else {
+            // Select appropriate sleep mode and go to sleep
+            uint8_t sleep = SLEEP_MODE_PWR_DOWN;
+            if (i2c_enabled() | timer1_enabled())
+                sleep = SLEEP_MODE_IDLE;    // Clock required by peripherals
+            set_sleep_mode(sleep);
+            sleep_enable();
+            sei();
+            sleep_cpu();
+            sleep_disable();
+        }
     }
 }
 
@@ -66,6 +70,6 @@ void key_irq(uint8_t key)
         uint8_t pressed = key & ~prev_key;
         prev_key = key;
         if (pressed & 1)
-            dev_pwr_en(DevEsp, !dev_pwr_enabled(DevEsp));
+            dev_pwr_req(DevEsp, !(dev_pwr_state() & _BV(DevEsp)));
     }
 }

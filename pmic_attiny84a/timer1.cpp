@@ -67,21 +67,6 @@ bool timer1_enabled(void)
     return !(PRR & _BV(PRTIM1));
 }
 
-void timer1_wait_sleep(void)
-{
-    for (;;) {
-        cli();
-        if (!delay_pending)
-            break;
-        set_sleep_mode(SLEEP_MODE_IDLE);
-        sleep_enable();
-        sei();
-        sleep_cpu();
-        sleep_disable();
-    }
-    sei();
-}
-
 ISR(TIM1_COMPA_vect)
 {
     // One-shot timer, disable interrupt, clock and power
@@ -93,11 +78,13 @@ ISR(TIM1_COMPA_vect)
     if (delay_pending) {
         delay_pending = false;
         sht_timer_irq();
-    }
 
-    if (timer1_enabled()) {
-        // Timer re-armed, wait for the next interrupt
+        // Check if need to re-arm timer for debouncing
+        if (debouncing_pending)
+            timer1_restart_debouncing();
+
     } else if (debouncing_pending) {
+        // Timer was triggered for debouncing
         debouncing_pending = false;
         led_act_off();
         key_irq(key_update());

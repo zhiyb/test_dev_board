@@ -30,7 +30,7 @@ static const uint8_t usicr_mask = _BV(USIWM1) | _BV(USIWM0) | _BV(USICS1);
 // Clear all interrupts and flags
 static const uint8_t usisr_mask = _BV(USISIF) | _BV(USIOIF) | _BV(USIPF) | _BV(USIDC);
 
-void i2c_slave_init(void)
+void i2c_master_init(void)
 {
     // IO port USIWM1 alt mode operation:
     // SDA:
@@ -52,10 +52,16 @@ void i2c_slave_init(void)
     // SCL output mode, controlled by start detector and counter overflow
     I2C_PORT |= I2C_SCL;
     I2C_DDR |= I2C_SCL;
-    // Waiting to be addressed
-    state = StateIdle;
     // Clear flags and bit counter
     USISR = usisr_mask;
+}
+
+void i2c_slave_init(void)
+{
+    i2c_master_init();
+
+    // Waiting to be addressed
+    state = StateIdle;
     // Enable interrupts
     USICR = usicr_mask | _BV(USISIE) | _BV(USIOIE);
 }
@@ -73,11 +79,43 @@ void i2c_deinit(void)
     power_usi_disable();
 }
 
-void i2c_master_init(void)
+bool i2c_enabled(void)
 {
-    i2c_slave_init();
-    // But with interrupts disabled
-    USICR = usicr_mask;
+    return !(PRR & _BV(PRUSI));
+}
+
+static inline void i2c_master_start(void)
+{
+    // Switch SDA to output mode, set to low
+    I2C_PORT &= ~I2C_SDA;
+    I2C_DDR |= I2C_SDA;
+    I2C_DELAY(-1);
+    // Set SCL to low
+    USICR |= _BV(USITC);
+    // Set SDA to DR
+    I2C_PORT |= I2C_SDA;
+    // Clear flags and bit counter
+    USISR = usisr_mask;
+    I2C_DELAY(-6);
+    led_act_trigger();
+}
+
+static inline void i2c_master_stop(void)
+{
+    // Switch SDA to output mode, set to low
+    I2C_PORT &= ~I2C_SDA;
+    I2C_DDR |= I2C_SDA;
+    // Set SCL to high
+    USICR |= _BV(USITC);
+    // Wait for SCL to raise
+    while (!(I2C_PIN & I2C_SCL));
+    I2C_DELAY(-1);
+    // Switch SDA to input mode with pull-up
+    I2C_PORT |= I2C_SDA;
+    I2C_DDR &= ~I2C_SDA;
+    // Wait for SDA to raise
+    while (!(I2C_PIN & I2C_SDA));
+    I2C_DELAY(-1);
 }
 
 void i2c_master_init_resync(void)
@@ -95,32 +133,11 @@ void i2c_master_init_resync(void)
         // Clear flags and bit counter
         USISR = usisr_mask;
     }
-}
 
-static inline void i2c_master_start(void)
-{
+    // Send stop condition
     // Switch SDA to output mode, set to low
     I2C_PORT &= ~I2C_SDA;
     I2C_DDR |= I2C_SDA;
-    I2C_DELAY(-1);
-    // Set SCL to low
-    USICR |= _BV(USITC);
-    // Set SDA to DR
-    I2C_PORT |= I2C_SDA;
-    // Clear flags and bit counter
-    USISR = usisr_mask;
-    I2C_DELAY(-3);
-}
-
-static inline void i2c_master_stop(void)
-{
-    // Switch SDA to output mode, set to low
-    I2C_PORT &= ~I2C_SDA;
-    I2C_DDR |= I2C_SDA;
-    // Set SCL to high
-    USICR |= _BV(USITC);
-    // Wait for SCL to raise
-    while (!(I2C_PIN & I2C_SCL));
     I2C_DELAY(-1);
     // Switch SDA to input mode with pull-up
     I2C_PORT |= I2C_SDA;

@@ -28,7 +28,7 @@ typedef enum {
     I2cRegPowerEn,
 } i2c_reg_t;
 
-uint32_t buf;
+static uint32_t buf;
 
 uint8_t i2c_slave_regs_read(uint8_t reg)
 {
@@ -36,8 +36,7 @@ uint8_t i2c_slave_regs_read(uint8_t reg)
     case I2cRegId:
         return 0x5d;
     case I2cRegState:
-        return dev_pwr_enabled(DevAux) | (dev_pwr_enabled(DevEsp) << 1) |
-            (key_state() << 2) | ((!adc_busy()) << 4);
+        return (dev_pwr_state() & 3) | (key_state() << 2) | ((!adc_busy()) << 4);
     case I2cRegBootMode:
         return eeprom_read_byte(&eeprom_data->boot_mode);
 
@@ -72,12 +71,9 @@ void i2c_slave_regs_write(uint8_t reg, uint8_t val)
 {
     switch (reg) {
     case I2cRegState:
-        dev_pwr_en(DevAux, val & 1);
-        dev_pwr_en(DevEsp, val & 2);
-        break;
     case I2cRegPowerEn:
-        dev_pwr_en(DevAux, val & 1);
-        dev_pwr_en(DevEsp, val & 2);
+        dev_pwr_req(DevAux, val & 1);
+        dev_pwr_req(DevEsp, val & 2);
         break;
     case I2cRegBootMode:
         eeprom_update_byte(&eeprom_data->boot_mode, val);
