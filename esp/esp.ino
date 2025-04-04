@@ -1,34 +1,62 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266WiFiMulti.h>
+#include <PubSubClient.h>
+#include <NTPClient.h>
+#include <WiFiUdp.h>
 #include "wifi_network.h"
 #include "http.h"
 #include "epd.h"
 #include "pmic.h"
+#include "common.h"
 
-static const unsigned int max_urllen = 128;
-static const unsigned int max_datalen = 8192;
+// static const unsigned int max_urllen = 128;
+// static const unsigned int max_datalen = 8192;
 
-ESP8266WiFiMulti WiFiMulti;
+static ESP8266WiFiMulti WiFiMulti;
+static WiFiClient wifiClient;
+static WiFiUDP wifiUDP;
+static PubSubClient mqttClient(wifiClient);
+static NTPClient ntpClient(wifiUDP, NTP_SERVER);
 
 char id[32];
 
+uint32_t mqtt_get(PubSubClient &mqttClient, const char *topic, void *data, uint32_t data_len)
+{
+    static const uint32_t timeout_sec = 5;
+
+    static uint32_t recv_len;
+    recv_len = 0;
+    mqttClient.setCallback([data, data_len](const char *topic, const uint8_t *pld, unsigned int pld_len) {
+        uint32_t len = std::min(pld_len, data_len);
+        memcpy(data, pld, len);
+        recv_len = len;
+    });
+
+    mqttClient.subscribe(topic, 1);
+    uint32_t ms = millis();
+    while (!recv_len && (uint32_t)(millis() - ms) < timeout_sec * 1000)
+        mqttClient.loop();
+    mqttClient.unsubscribe(topic);
+    mqttClient.setCallback(nullptr);
+    return recv_len;
+}
+
 void setup()
 {
-    Serial.begin(38400);
+    Serial.begin(115200);
     Serial.println();
     Serial.printf("ESP8266: %#010x, Flash: %#010x %uMiB\n",
         ESP.getChipId(), ESP.getFlashChipId(),
         ESP.getFlashChipRealSize() / 1024 / 1024);
     sprintf(id, "esp_%08x_%08x", ESP.getChipId(), ESP.getFlashChipId());
 
-    epd_init();
-
     // Workaround for WiFI error: pll_cal exceeds 2ms
     delay(5);
     //WiFi.mode(WIFI_STA);
     WiFiMulti.addAP(WIFI_SSID, WIFI_PASSWORD);
 
-    http_init();
+    // http_init();
+    // epd_init();
 }
 
 void loop()
@@ -53,6 +81,16 @@ void loop()
         Serial.println(WiFi.localIP());
     }
 
+    // Connect to MQTT server
+    mqttClient.setServer(MQTT_SERVER, MQTT_PORT);
+    if (mqttClient.connect(id, MQTT_USER, MQTT_PASSWORD)) {
+        // Connected
+        pmic_init();
+        pmic_update(ntpClient, mqttClient, id);
+        mqttClient.disconnect();
+    }
+
+#if 0
     char url[128];
 
     // Get scheduling info
@@ -108,12 +146,15 @@ void loop()
 
     // Configure PMIC for next wakeup
     pmic_init();
-    pmic_update();
+    // pmic_update();
+#endif
 
     // Done
     WiFi.disconnect();
+#if 0
     if (epd_func)
         epd_func->wait();
+#endif
     epd_deinit();
 
     // Boot mode
@@ -122,7 +163,7 @@ void loop()
     // b2: GPIO15   should be 0
 
     Serial.println("SLEEP");
-    pmic_shutdown();
+    // pmic_shutdown();
     for (;;)
         ESP.deepSleep(0, WAKE_RF_DISABLED);
 }

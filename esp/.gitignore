@@ -2,5 +2,7 @@
 build
 
 *.bak
+*.bin
+*.sh
 
 wifi_network.h
