@@ -40,6 +40,8 @@ typedef enum {
     I2cRegShtLastMeasurement1,
     I2cRegShtLastMeasurement2,      // u16 RH
     I2cRegShtLastMeasurement3,
+    I2cRegShtLastMeasurement4,      // u16 WDT tick
+    I2cRegShtLastMeasurement5,
     I2cRegShtReadMeasurementLog0,   // u16 T
     I2cRegShtReadMeasurementLog1,
     I2cRegShtReadMeasurementLog2,   // u16 RH
@@ -95,6 +97,8 @@ uint8_t i2c_slave_regs_read(uint8_t reg)
     case I2cRegAdcVbg1:
     case I2cRegEspTimeoutSec1:
     case I2cRegPicoTimeoutSec1:
+    case I2cRegShtLastMeasurement4:
+    case I2cRegShtLastMeasurement5:
     case I2cRegShtReadMeasurementLog4:
     case I2cRegShtReadMeasurementLog5:
         v = buf_u16;
@@ -112,6 +116,7 @@ uint8_t i2c_slave_regs_read(uint8_t reg)
             case I2cRegShtLastMeasurement0:
                 psht = sht_last_measurement();
                 buf_u32 = psht->t | ((uint32_t)psht->rh << 16);
+                buf_u16 = psht->tick;
                 break;
             case I2cRegShtReadMeasurementLog0:
                 psht = sht_read_measurement_log();
