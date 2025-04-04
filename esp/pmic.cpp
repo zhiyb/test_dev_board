@@ -146,7 +146,6 @@ void pmic_update(NTPClient &ntpClient, PubSubClient &mqttClient, const char *id)
     // Calibrate PMIC watchdog timer
     static const uint32_t wdt_cal_typical = 8000000;
     static const uint32_t wdt_cal_margin = 4000000;
-    static const uint32_t wdt_cal_drift_margin = 1000000 / 2;
     static const uint32_t ntp_ts_max_delay = 1000000;
 
     uint32_t wdt_cal;
@@ -219,8 +218,7 @@ void pmic_update(NTPClient &ntpClient, PubSubClient &mqttClient, const char *id)
                     ts_delta = ts_delta * 1000000 + (2000000 + ntp_ts_max_delay);
                     new_wdt_cal_max = (ts_delta + tick_delta_min / 2) / tick_delta_min;
                     // Update max value if calculated value is sensible
-                    if (new_wdt_cal_max < wdt_cal_max + wdt_cal_drift_margin &&
-                        new_wdt_cal_max > wdt_cal_typical - wdt_cal_margin) {
+                    if (new_wdt_cal_max > wdt_cal_typical - wdt_cal_margin) {
                         wdt_cal_max = ((uint64_t)wdt_cal_weight * wdt_cal_max +
                             (uint64_t)tick_delta_min * new_wdt_cal_max) / (wdt_cal_weight + tick_delta_min);
                     }
@@ -235,8 +233,7 @@ void pmic_update(NTPClient &ntpClient, PubSubClient &mqttClient, const char *id)
                 ts_delta = std::max(ts_delta * 1000000, 1000000ull + ntp_ts_max_delay) - (1000000ull + ntp_ts_max_delay);
                 new_wdt_cal_min = (ts_delta + tick_delta_max / 2) / tick_delta_max;
                 // Update min value if calculated value is sensible
-                if (new_wdt_cal_min > wdt_cal_min - wdt_cal_drift_margin &&
-                    new_wdt_cal_min < wdt_cal_typical + wdt_cal_margin) {
+                if (new_wdt_cal_min < wdt_cal_typical + wdt_cal_margin) {
                     wdt_cal_min = ((uint64_t)wdt_cal_weight * wdt_cal_min +
                         (uint64_t)tick_delta_min * new_wdt_cal_min) / (wdt_cal_weight + tick_delta_min);
                 }
