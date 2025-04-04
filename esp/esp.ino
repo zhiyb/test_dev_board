@@ -163,7 +163,7 @@ void loop()
     // b2: GPIO15   should be 0
 
     Serial.println("SLEEP");
-    // pmic_shutdown();
+    pmic_shutdown();
     for (;;)
         ESP.deepSleep(0, WAKE_RF_DISABLED);
 }

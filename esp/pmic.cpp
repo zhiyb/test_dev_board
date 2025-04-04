@@ -40,6 +40,8 @@ typedef enum {
     I2cRegShtLastMeasurement1,
     I2cRegShtLastMeasurement2,      // u16 RH
     I2cRegShtLastMeasurement3,
+    I2cRegShtLastMeasurement4,      // u16 WDT tick
+    I2cRegShtLastMeasurement5,
     I2cRegShtReadMeasurementLog0,   // u16 T
     I2cRegShtReadMeasurementLog1,
     I2cRegShtReadMeasurementLog2,   // u16 RH
@@ -147,60 +149,103 @@ void pmic_update(NTPClient &ntpClient, PubSubClient &mqttClient, const char *id)
     static const uint32_t wdt_cal_typical = 8000000;
     static const uint32_t wdt_cal_margin = 4000000;
     static const uint32_t ntp_ts_max_delay = 1000000;
+    static const uint32_t wdt_tick_delta_max = 2 * 24 * 60 * 60 / (wdt_cal_typical / 1000000);
 
     uint32_t wdt_cal;
     uint32_t wdt_cal_min;
     uint32_t wdt_cal_max;
+    uint32_t ref_ntp_ts;
+    uint32_t ref_wdt_tick;
+    uint32_t wdt_tick;
+    bool ts_valid = true;
 
     {
-        ntpClient.update();
-        uint32_t ntp_ts = ntpClient.getEpochTime();
-        uint32_t wdt_tick;
-        pmic_read_multi(I2cRegWdtTick0, (uint8_t *)&wdt_tick, 4);
+        bool rec_valid = true;
 
-        // Fetch previous calibration value, unit is us
-        bool valid = true;
-        uint32_t wdt_cal_weight;
-        sprintf(topic, "var/%s/wdt_cal", id);
-        valid &= mqtt_get(mqttClient, topic, &wdt_cal, sizeof(wdt_cal)) == sizeof(wdt_cal);
-        if (valid) {
-            sprintf(topic, "var/%s/wdt_cal_min", id);
-            valid &= mqtt_get(mqttClient, topic, &wdt_cal_min, sizeof(wdt_cal_min)) == sizeof(wdt_cal_min);
-            sprintf(topic, "var/%s/wdt_cal_max", id);
-            valid &= mqtt_get(mqttClient, topic, &wdt_cal_max, sizeof(wdt_cal_max)) == sizeof(wdt_cal_max);
-            sprintf(topic, "var/%s/wdt_cal_weight", id);
-            valid &= mqtt_get(mqttClient, topic, &wdt_cal_weight, sizeof(wdt_cal_weight)) == sizeof(wdt_cal_weight);
+        // Latest values
+        uint32_t ntp_ts;
+        if (ts_valid) {
+            ts_valid &= ntpClient.update();
         }
-        if (!valid) {
+        if (ts_valid) {
+            ntp_ts = ntpClient.getEpochTime();
+            ts_valid &= pmic_read_multi(I2cRegWdtTick0, (uint8_t *)&wdt_tick, 4) == sizeof(wdt_tick);
+            rec_valid &= pmic_read(I2cRegWdtScratch);
+        }
+        rec_valid &= ts_valid;
+
+        // Fetch previous calibration values, unit is us
+        uint32_t wdt_cal_weight;
+        if (rec_valid) {
+            sprintf(topic, "var/%s/ref_ntp_ts", id);
+            rec_valid &= mqtt_get(mqttClient, topic, &ref_ntp_ts, sizeof(ref_ntp_ts)) == sizeof(ref_ntp_ts);
+        }
+        if (rec_valid) {
+            sprintf(topic, "var/%s/ref_wdt_tick", id);
+            rec_valid &= mqtt_get(mqttClient, topic, &ref_wdt_tick, sizeof(ref_wdt_tick)) == sizeof(ref_wdt_tick);
+        }
+        if (rec_valid) {
+            sprintf(topic, "var/%s/wdt_cal_weight", id);
+            rec_valid &= mqtt_get(mqttClient, topic, &wdt_cal_weight, sizeof(wdt_cal_weight)) == sizeof(wdt_cal_weight);
+        }
+
+        // Previous calibration results may be valid anyway
+        bool prev_cal_valid = true;
+        if (prev_cal_valid) {
+            sprintf(topic, "var/%s/wdt_cal", id);
+            prev_cal_valid &= mqtt_get(mqttClient, topic, &wdt_cal, sizeof(wdt_cal)) == sizeof(wdt_cal);
+        }
+        if (prev_cal_valid) {
+            sprintf(topic, "var/%s/wdt_cal_min", id);
+            prev_cal_valid &= mqtt_get(mqttClient, topic, &wdt_cal_min, sizeof(wdt_cal_min)) == sizeof(wdt_cal_min);
+        }
+        if (prev_cal_valid) {
+            sprintf(topic, "var/%s/wdt_cal_max", id);
+            prev_cal_valid &= mqtt_get(mqttClient, topic, &wdt_cal_max, sizeof(wdt_cal_max)) == sizeof(wdt_cal_max);
+        }
+        rec_valid &= prev_cal_valid;
+        if (!prev_cal_valid) {
+            // Revert to default values
             wdt_cal = wdt_cal_typical;
             wdt_cal_min = wdt_cal - wdt_cal_margin;
             wdt_cal_max = wdt_cal + wdt_cal_margin;
             wdt_cal_weight = 1;
         }
 
-        uint8_t wdt_scratch = pmic_read(I2cRegWdtScratch);
-        if (valid && wdt_scratch) {
+
+        bool upd_ref = false;
+        bool upd_cal = false;
+        if (!rec_valid) {
+            // Invalid MQTT record or PMIC rebooted, calibration not possible
+            // Update reference to current time
+            if (ts_valid) {
+                upd_ref = true;
+                upd_cal = true;
+                ref_wdt_tick = wdt_tick;
+                ref_ntp_ts = ntp_ts;
+            }
+
+        } else {
             // Calibration possible
-
-            // Fetch and update MQTT timestamp records
-            valid = true;
-            uint32_t ref_wdt_tick;
-            sprintf(topic, "var/%s/last_wdt_tick", id);
-            valid &= mqtt_get(mqttClient, topic, &ref_wdt_tick, sizeof(ref_wdt_tick)) == sizeof(ref_wdt_tick);
-            mqttClient.publish(topic, (uint8_t *)&wdt_tick, sizeof(wdt_tick), true);
-            sprintf(topic, "var/%s/ref_wdt_tick", id);
-            mqttClient.publish(topic, (uint8_t *)&ref_wdt_tick, sizeof(ref_wdt_tick), true);
-
-            uint32_t ref_ntp_ts;
-            sprintf(topic, "var/%s/last_ntp_ts", id);
-            valid &= mqtt_get(mqttClient, topic, &ref_ntp_ts, sizeof(ref_ntp_ts)) == sizeof(ref_ntp_ts);
-            mqttClient.publish(topic, (uint8_t *)&ntp_ts, sizeof(ntp_ts), true);
-            sprintf(topic, "var/%s/ref_ntp_ts", id);
-            mqttClient.publish(topic, (uint8_t *)&ref_ntp_ts, sizeof(ref_ntp_ts), true);
-
             uint32_t wdt_tick_delta = wdt_tick - ref_wdt_tick;
-            if (valid && wdt_tick_delta != 0) {
+            if (wdt_tick_delta >= wdt_tick_delta_max) {
+                // Calibration reference too old
+                // Interpolate to current tick - wdt_tick_delta_max / 2
+                upd_ref = true;
+
+                uint32_t wdt_tick_inc = wdt_tick_delta - wdt_tick_delta_max / 2;
+                wdt_tick_delta = wdt_tick_delta_max / 2;
+                ref_wdt_tick += wdt_tick_inc;
+
+                uint64_t ts_delta_us = wdt_cal;
+                ts_delta_us *= wdt_tick_inc;
+                ref_ntp_ts += (ts_delta_us + 500000) / 1000000;
+            }
+
+            if (wdt_tick_delta > 0) {
                 // Reference valid, calibrate
+                upd_cal = true;
+
                 uint32_t ntp_ts_delta = ntp_ts - ref_ntp_ts;
                 uint32_t tick_delta_min;
                 uint32_t tick_delta_max;
@@ -245,20 +290,19 @@ void pmic_update(NTPClient &ntpClient, PubSubClient &mqttClient, const char *id)
                 wdt_cal_weight = ((uint64_t)wdt_cal_weight * wdt_cal_weight +
                     (uint64_t)tick_delta_min * tick_delta_min) / (wdt_cal_weight + tick_delta_min);
 
-#define CAL_DEBUG   1
-#if CAL_DEBUG
-                // Debug logs
+#if 1
+                // Calibration debug values
+                sprintf(topic, "debug/%s/wdt_tick", id);
+                sprintf(data, "%lu", wdt_tick);
+                mqttClient.publish(topic, data, true);
+                sprintf(topic, "debug/%s/ntp_ts", id);
+                sprintf(data, "%lu", ntp_ts);
+                mqttClient.publish(topic, data, true);
                 sprintf(topic, "debug/%s/ref_wdt_tick", id);
                 sprintf(data, "%lu", ref_wdt_tick);
                 mqttClient.publish(topic, data, true);
-                sprintf(topic, "debug/%s/last_wdt_tick", id);
-                sprintf(data, "%lu", wdt_tick);
-                mqttClient.publish(topic, data, true);
                 sprintf(topic, "debug/%s/ref_ntp_ts", id);
                 sprintf(data, "%lu", ref_ntp_ts);
-                mqttClient.publish(topic, data, true);
-                sprintf(topic, "debug/%s/last_ntp_ts", id);
-                sprintf(data, "%lu", ntp_ts);
                 mqttClient.publish(topic, data, true);
 
                 sprintf(topic, "debug/%s/new_wdt_cal_min", id);
@@ -288,69 +332,152 @@ void pmic_update(NTPClient &ntpClient, PubSubClient &mqttClient, const char *id)
                 mqttClient.publish(topic, data, true);
 #endif
             }
-
-        } else {
-            // Invalid MQTT record or PMIC rebooted, calibration not possible
-
-            // Update MQTT timestamp records
-            sprintf(topic, "var/%s/last_wdt_tick", id);
-            mqttClient.publish(topic, (uint8_t *)&wdt_tick, sizeof(wdt_tick), true);
-
-            sprintf(topic, "var/%s/last_ntp_ts", id);
-            mqttClient.publish(topic, (uint8_t *)&ntp_ts, sizeof(ntp_ts), true);
         }
 
-        // Update calibration values
-        valid = true;
-        sprintf(topic, "var/%s/wdt_cal", id);
-        valid &= mqttClient.publish(topic, (uint8_t *)&wdt_cal, sizeof(wdt_cal), true);
-        sprintf(topic, "var/%s/wdt_cal_min", id);
-        valid &= mqttClient.publish(topic, (uint8_t *)&wdt_cal_min, sizeof(wdt_cal_min), true);
-        sprintf(topic, "var/%s/wdt_cal_max", id);
-        valid &= mqttClient.publish(topic, (uint8_t *)&wdt_cal_max, sizeof(wdt_cal_max), true);
-        sprintf(topic, "var/%s/wdt_cal_weight", id);
-        valid &= mqttClient.publish(topic, (uint8_t *)&wdt_cal_weight, sizeof(wdt_cal_weight), true);
 
-        // Only update PMIC record if MQTT update was successful
-        if (!wdt_scratch && valid)
-            pmic_write(I2cRegWdtScratch, 1);
+        // Update calibration records
+        bool upd_success = true;
+        if (upd_ref) {
+            if (upd_success) {
+                sprintf(topic, "var/%s/ref_wdt_tick", id);
+                upd_success &= mqttClient.publish(topic, (uint8_t *)&ref_wdt_tick, sizeof(ref_wdt_tick), true);
+            }
+            if (upd_success) {
+                sprintf(topic, "var/%s/ref_ntp_ts", id);
+                upd_success &= mqttClient.publish(topic, (uint8_t *)&ref_ntp_ts, sizeof(ref_ntp_ts), true);
+            }
+        }
+
+        if (upd_cal) {
+            if (upd_success) {
+                sprintf(topic, "var/%s/wdt_cal", id);
+                upd_success &= mqttClient.publish(topic, (uint8_t *)&wdt_cal, sizeof(wdt_cal), true);
+            }
+            if (upd_success) {
+                sprintf(topic, "var/%s/wdt_cal_min", id);
+                upd_success &= mqttClient.publish(topic, (uint8_t *)&wdt_cal_min, sizeof(wdt_cal_min), true);
+            }
+            if (upd_success) {
+                sprintf(topic, "var/%s/wdt_cal_max", id);
+                upd_success &= mqttClient.publish(topic, (uint8_t *)&wdt_cal_max, sizeof(wdt_cal_max), true);
+            }
+            if (upd_success) {
+                sprintf(topic, "var/%s/wdt_cal_weight", id);
+                upd_success &= mqttClient.publish(topic, (uint8_t *)&wdt_cal_weight, sizeof(wdt_cal_weight), true);
+            }
+        }
+
+        // If update failed, records need to be re-initialised next time
+        if (upd_ref | upd_cal)
+            pmic_write(I2cRegWdtScratch, upd_success);
     }
 
-    {
+    if (ts_valid) {
         uint16_t adc_val[2] = {0};
-        pmic_read_multi(I2cRegAdcTemp0, (uint8_t *)&adc_val[0], 4);
+        if (pmic_read_multi(I2cRegAdcTemp0, (uint8_t *)&adc_val[0], 4) == 4) {
+            // Calculate current timestamp
+            uint32_t tick_delta = wdt_tick - ref_wdt_tick;
+            uint64_t ts_delta = tick_delta;
+            ts_delta *= wdt_cal;
+            ts_delta = (ts_delta + 500000) / 1000000;
+            uint32_t ts = ref_ntp_ts + ts_delta;
 
-        // Report battery voltage
-        sprintf(topic, "sensor/%s/voltage/pmic_vcc", id);
-        sprintf(data, "%g", (float)adc_val[1] / 4096.0);
-        mqttClient.publish(topic, data, true);
+            // Report battery voltage
+            sprintf(topic, "sensor/%s/voltage/pmic_vcc", id);
+            sprintf(data, "{\"ts\":%lu,\"value\":%g}", ts, (float)adc_val[1] / 4096.0);
+            mqttClient.publish(topic, data, true);
 
-        // Report pmic temperature TODO conversion
-        sprintf(topic, "sensor/%s/adc_raw/pmic_temp", id);
-        sprintf(data, "%d", adc_val[0]);
-        mqttClient.publish(topic, data, true);
+            // Report pmic temperature TODO conversion
+            sprintf(topic, "sensor/%s/adc_raw/pmic_temp", id);
+            sprintf(data, "{\"ts\":%lu,\"value\":%d}", ts, adc_val[0]);
+            mqttClient.publish(topic, data, true);
+        }
     }
 
-    {
+    if (ts_valid) {
+        // Send all sensor measurement logs
+        uint8_t len = pmic_read(I2cRegShtMeasurementLogLength);
+        while (len--) {
+            union {
+                struct {
+                    uint16_t t;
+                    uint16_t rh;
+                    uint16_t tick;
+                };
+                uint8_t raw[0];
+            } sht;
+
+            if (pmic_read_multi(I2cRegShtReadMeasurementLog0, &sht.raw[0], 6) == 6) {
+                // Assuming sht.tick must be within 0x10000 of current wdt_tick
+                uint32_t tick = ((wdt_tick - 0x10000u) & 0xffff0000u) | sht.tick;
+                tick += (uint32_t)(wdt_tick - tick) & 0xffff0000u;
+                int32_t tick_delta = tick - ref_wdt_tick;
+                int64_t ts_delta = tick_delta;
+                ts_delta *= wdt_cal;
+                ts_delta = (ts_delta + 500000) / 1000000;
+                uint32_t ts = ref_ntp_ts + ts_delta;
+
+                // Report temperature
+                sprintf(topic, "sensor/%s/temperature/pmic_sht", id);
+                sprintf(data, "{\"ts\":%lu,\"value\":%g}", ts, -45 + (uint32_t)sht.t * 175 / 65535.0);
+                mqttClient.publish(topic, data, true);
+
+                // Report humidity
+                sprintf(topic, "sensor/%s/humidity/pmic_sht", id);
+                sprintf(data, "{\"ts\":%lu,\"value\":%g}", ts, -6 + (uint32_t)sht.rh * 125 / 65535.0);
+                mqttClient.publish(topic, data, true);
+            }
+        }
+    }
+
+#if 0
+    if (ts_valid) {
         union {
             struct {
                 uint16_t t;
                 uint16_t rh;
+                uint16_t tick;
             };
             uint8_t raw[0];
         } sht;
-        pmic_read_multi(I2cRegShtLastMeasurement0, &sht.raw[0], 4);
+        pmic_read_multi(I2cRegShtLastMeasurement0, &sht.raw[0], 6);
+
+        // Assuming sht.tick must be within 0x10000 of current wdt_tick
+        uint32_t tick = ((wdt_tick - 0x10000u) & 0xffff0000u) | sht.tick;
+        tick += (uint32_t)(wdt_tick - tick) & 0xffff0000u;
+        int32_t tick_delta = tick - ref_wdt_tick;
+        int64_t ts_delta = tick_delta;
+        ts_delta *= wdt_cal;
+        ts_delta = (ts_delta + 500000) / 1000000;
+        uint32_t ts = ref_ntp_ts + ts_delta;
+
+#if 1
+        // Timestamp calculation debug values
+        sprintf(topic, "debug/%s/sht_tick_raw", id);
+        sprintf(data, "%lu", (uint32_t)sht.tick);
+        mqttClient.publish(topic, data, true);
+        sprintf(topic, "debug/%s/sht_tick", id);
+        sprintf(data, "%lu", (uint32_t)tick);
+        mqttClient.publish(topic, data, true);
+        sprintf(topic, "debug/%s/sht_ts_delta", id);
+        sprintf(data, "%ld", (int32_t)ts_delta);
+        mqttClient.publish(topic, data, true);
+        sprintf(topic, "debug/%s/sht_ts", id);
+        sprintf(data, "%lu", (uint32_t)ts);
+        mqttClient.publish(topic, data, true);
+#endif
 
         // Report temperature
         sprintf(topic, "sensor/%s/temperature/pmic_sht", id);
-        sprintf(data, "%g", -45 + (uint32_t)sht.t * 175 / 65535.0);
+        sprintf(data, "{\"ts\":%lu,\"value\":%g}", ts, -45 + (uint32_t)sht.t * 175 / 65535.0);
         mqttClient.publish(topic, data, true);
 
         // Report humidity
         sprintf(topic, "sensor/%s/humidity/pmic_sht", id);
-        sprintf(data, "%g", -6 + (uint32_t)sht.rh * 125 / 65535.0);
+        sprintf(data, "{\"ts\":%lu,\"value\":%g}", ts, -6 + (uint32_t)sht.rh * 125 / 65535.0);
         mqttClient.publish(topic, data, true);
     }
+#endif
 }
 
 #if 0
