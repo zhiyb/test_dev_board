@@ -12,29 +12,27 @@ typedef enum {
     I2cRegState,
     I2cRegBootMode,
 
-    I2cRegAdcTemp0,
-    I2cRegAdcTemp1,
-    I2cRegAdcVbg0,
-    I2cRegAdcVbg1,
-
-    I2cRegEspTimeoutSec0,
-    I2cRegEspTimeoutSec1,
-    I2cRegPicoTimeoutSec0,
-    I2cRegPicoTimeoutSec1,
-    I2cRegEspScheduleSec0,          // u32
-    I2cRegEspScheduleSec1,
-    I2cRegEspScheduleSec2,
-    I2cRegEspScheduleSec3,
-    I2cRegPicoScheduleSec0,         // u32
-    I2cRegPicoScheduleSec1,
-    I2cRegPicoScheduleSec2,
-    I2cRegPicoScheduleSec3,
+    I2cRegSchdDev,                  // Select a dev for configuration
+    I2cRegSchdScheduled,
+    I2cRegSchdPeriodic0,            // u16
+    I2cRegSchdPeriodic1,
+    I2cRegSchdTimeout0,             // u16
+    I2cRegSchdTimeout1,
+    I2cRegSchdNextTick0,            // u32
+    I2cRegSchdNextTick1,
+    I2cRegSchdNextTick2,
+    I2cRegSchdNextTick3,
 
     I2cRegWdtScratch,
     I2cRegWdtTick0,                 // u32
     I2cRegWdtTick1,
     I2cRegWdtTick2,
     I2cRegWdtTick3,
+
+    I2cRegAdcTemp0,                 // u16
+    I2cRegAdcTemp1,
+    I2cRegAdcVcc0,                  // u16
+    I2cRegAdcVcc1,
 
     I2cRegShtLastMeasurement0,      // u16 T
     I2cRegShtLastMeasurement1,
@@ -159,6 +157,7 @@ void pmic_update(NTPClient &ntpClient, PubSubClient &mqttClient, const char *id)
     uint32_t wdt_tick;
     bool ts_valid = true;
 
+    // WDT tick timing calibration
     {
         bool rec_valid = true;
 
@@ -372,7 +371,16 @@ void pmic_update(NTPClient &ntpClient, PubSubClient &mqttClient, const char *id)
             pmic_write(I2cRegWdtScratch, upd_success);
     }
 
+    // Update VBAT
     if (ts_valid) {
+        // Read calibration value
+        char vbg_str[8];
+        sprintf(topic, "config/%s/pmic/adc_vbg", id);
+        uint8_t vbg_str_len = mqtt_get(mqttClient, topic, &vbg_str[0], sizeof(vbg_str));
+        vbg_str_len = max(vbg_str_len, (uint8_t)(sizeof(vbg_str) - 1));
+        vbg_str[vbg_str_len] = 0;
+        float adc_vbg = atof(vbg_str);
+
         uint16_t adc_val[2] = {0};
         if (pmic_read_multi(I2cRegAdcTemp0, (uint8_t *)&adc_val[0], 4) == 4) {
             // Calculate current timestamp
@@ -383,17 +391,27 @@ void pmic_update(NTPClient &ntpClient, PubSubClient &mqttClient, const char *id)
             uint32_t ts = ref_ntp_ts + ts_delta;
 
             // Report battery voltage
-            sprintf(topic, "sensor/%s/voltage/pmic_vcc", id);
-            sprintf(data, "{\"ts\":%lu,\"value\":%g}", ts, (float)adc_val[1] / 4096.0);
-            mqttClient.publish(topic, data, true);
+            if (adc_vbg == 0) {
+                // Invalid calibration value, report as adc_raw
+                sprintf(topic, "sensor/%s/adc_raw/pmic_vcc", id);
+                sprintf(data, "{\"ts\":%lu,\"value\":%u}", ts, (uint32_t)adc_val[1]);
+                mqttClient.publish(topic, data, true);
+            } else {
+                // Convert to voltage
+                float adc_vcc = adc_vbg * 1024.0 / (float)adc_val[1];
+                sprintf(topic, "sensor/%s/voltage/pmic_vcc", id);
+                sprintf(data, "{\"ts\":%lu,\"value\":%g}", ts, adc_vcc);
+                mqttClient.publish(topic, data, true);
+            }
 
             // Report pmic temperature TODO conversion
             sprintf(topic, "sensor/%s/adc_raw/pmic_temp", id);
-            sprintf(data, "{\"ts\":%lu,\"value\":%d}", ts, adc_val[0]);
+            sprintf(data, "{\"ts\":%lu,\"value\":%u}", ts, (uint32_t)adc_val[0]);
             mqttClient.publish(topic, data, true);
         }
     }
 
+    // Update sensor logs
     if (ts_valid) {
         // Send all sensor measurement logs
         uint8_t len = pmic_read(I2cRegShtMeasurementLogLength);
@@ -430,7 +448,7 @@ void pmic_update(NTPClient &ntpClient, PubSubClient &mqttClient, const char *id)
         }
     }
 
-#if 0
+#if 0   // Update sensor latest measurements
     if (ts_valid) {
         union {
             struct {
@@ -478,6 +496,8 @@ void pmic_update(NTPClient &ntpClient, PubSubClient &mqttClient, const char *id)
         mqttClient.publish(topic, data, true);
     }
 #endif
+
+    // TODO Update scheduling info
 }
 
 #if 0

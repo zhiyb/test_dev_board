@@ -9,9 +9,6 @@
 #include "pmic.h"
 #include "common.h"
 
-// static const unsigned int max_urllen = 128;
-// static const unsigned int max_datalen = 8192;
-
 static ESP8266WiFiMulti WiFiMulti;
 static WiFiClient wifiClient;
 static WiFiUDP wifiUDP;
@@ -22,7 +19,7 @@ char id[32];
 
 uint32_t mqtt_get(PubSubClient &mqttClient, const char *topic, void *data, uint32_t data_len)
 {
-    static const uint32_t timeout_sec = 5;
+    static const uint32_t timeout_sec = 3;
 
     static uint32_t recv_len;
     recv_len = 0;
