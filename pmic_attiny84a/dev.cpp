@@ -151,52 +151,44 @@ uint8_t dev_pwr_state(void)
 
 uint16_t dev_get_timeout_ticks(dev_t dev)
 {
-    uint16_t *p = 0;
     if (dev == DevAux)
-        p = &eeprom_data->aux_timeout_ticks;
+        return eeprom_cache.aux_timeout_ticks;
     else if (dev == DevEsp)
-        p = &eeprom_data->esp_timeout_ticks;
+        return eeprom_cache.esp_timeout_ticks;
     else if (dev == DevSHT)
-        p = &eeprom_data->sht_timeout_ticks;
-    return p ? eeprom_read_word(p) : 0;
+        return eeprom_cache.sht_timeout_ticks;
+    return 0;
 }
 
 void dev_set_timeout_ticks(dev_t dev, uint16_t ticks)
 {
-    uint16_t *p = 0;
     if (dev == DevAux)
-        p = &eeprom_data->aux_timeout_ticks;
+        eeprom_cache.aux_timeout_ticks = ticks;
     else if (dev == DevEsp)
-        p = &eeprom_data->esp_timeout_ticks;
+        eeprom_cache.esp_timeout_ticks = ticks;
     else if (dev == DevSHT)
-        p = &eeprom_data->sht_timeout_ticks;
-    if (p)
-        eeprom_write_word(p, ticks);
+        eeprom_cache.sht_timeout_ticks = ticks;
 }
 
 uint16_t dev_get_periodic_ticks(dev_t dev)
 {
-    uint16_t *p = 0;
     if (dev == DevAux)
-        p = &eeprom_data->aux_periodic_ticks;
+        return eeprom_cache.aux_periodic_ticks;
     else if (dev == DevEsp)
-        p = &eeprom_data->esp_periodic_ticks;
+        return eeprom_cache.esp_periodic_ticks;
     else if (dev == DevSHT)
-        p = &eeprom_data->sht_periodic_ticks;
-    return p ? eeprom_read_word(p) : 0;
+        return eeprom_cache.sht_periodic_ticks;
+    return 0;
 }
 
 void dev_set_periodic_ticks(dev_t dev, uint16_t ticks)
 {
-    uint16_t *p = 0;
     if (dev == DevAux)
-        p = &eeprom_data->aux_periodic_ticks;
+        eeprom_cache.aux_periodic_ticks = ticks;
     else if (dev == DevEsp)
-        p = &eeprom_data->esp_periodic_ticks;
+        eeprom_cache.esp_periodic_ticks = ticks;
     else if (dev == DevSHT)
-        p = &eeprom_data->sht_periodic_ticks;
-    if (p)
-        eeprom_write_word(p, ticks);
+        eeprom_cache.sht_periodic_ticks = ticks;
 }
 
 uint32_t dev_get_next_tick(dev_t dev)
@@ -225,7 +217,7 @@ void dev_init(void)
     uint32_t tick = wdt_tick();
 
     // Check scheduling info in EEPROM config
-    uint8_t boot_mode = eeprom_read_byte(&eeprom_data->boot_mode);
+    uint8_t boot_mode = eeprom_cache.boot_mode;
     for (uint8_t dev = 0; dev < NumDevs; dev++) {
         if (boot_mode & _BV(dev))
             dev_pwr_req((dev_t)dev, true);

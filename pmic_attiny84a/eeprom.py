@@ -12,11 +12,11 @@ eeprom_data = {
     # (u16) AUX max power on time
     "aux_timeout_ticks":    0,
     # (u16) ESP periodic power on time
-    "esp_periodic_ticks":   5 * 60 // tick_typical_secs,
+    "esp_periodic_ticks":   0,
     # (u16) ESP max power on time
     "esp_timeout_ticks":    2 * 60 // tick_typical_secs,
     # (u16) SHT sensor periodic power on time
-    "sht_periodic_ticks":   2,
+    "sht_periodic_ticks":   0,
     # (u16) SHT sensor max power on time
     "sht_timeout_ticks":    1,
 }

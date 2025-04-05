@@ -30,7 +30,8 @@ void init()
 
     stack_magic = STACK_MAGIC;
 
-    adc_start();
+    // adc_start();
+    eeprom_init();
     key_init();
     wdt_init();
     dev_init();

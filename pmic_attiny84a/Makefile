@@ -1,7 +1,7 @@
 # Author: Norman Zhi (normanzyb@gmail.com)
 
 TRG	= pmic
-SRC	= main.cpp led.cpp key.cpp dev.cpp i2c.cpp i2c_regs.cpp adc.cpp timer1.cpp wdt.cpp sht.cpp
+SRC	= main.cpp led.cpp key.cpp dev.cpp i2c.cpp i2c_regs.cpp adc.cpp timer1.cpp wdt.cpp sht.cpp eeprom.cpp
 
 MCU_TARGET	= attiny84a
 MCU_FREQ	= 8000000

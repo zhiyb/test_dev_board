@@ -7,10 +7,11 @@
 #include "sht.h"
 #include "wdt.h"
 
-typedef enum {
+typedef enum : uint8_t {
     I2cRegId = 0,
     I2cRegState,
     I2cRegBootMode,
+    I2cRegStoreConfig,
 
     I2cRegSchdDev,                  // Select a dev for configuration
     I2cRegSchdScheduled,
@@ -47,7 +48,7 @@ typedef enum {
     I2cRegShtReadMeasurementLog4,   // u16 WDT tick
     I2cRegShtReadMeasurementLog5,
     I2cRegShtMeasurementLogLength,
-} i2c_reg_t;
+} pmic_i2c_reg_t;
 
 static uint32_t buf_u32;
 static uint16_t buf_u16;
@@ -58,13 +59,13 @@ uint8_t i2c_slave_regs_read(uint8_t reg)
 {
     const sht_data_t *psht;
     uint8_t v;
-    switch (reg) {
+    switch ((pmic_i2c_reg_t)reg) {
     case I2cRegId:
         return 0x5d;
     case I2cRegState:
         return (dev_pwr_state() & 3) | (key_state() << 2) | ((!adc_busy()) << 4);
     case I2cRegBootMode:
-        return eeprom_read_byte(&eeprom_data->boot_mode);
+        return eeprom_cache.boot_mode;
 
     case I2cRegSchdDev:
         return schd_dev;
@@ -81,7 +82,7 @@ uint8_t i2c_slave_regs_read(uint8_t reg)
     case I2cRegSchdTimeout0:
     case I2cRegAdcTemp0:
     case I2cRegAdcVcc0:
-        switch (reg) {
+        switch ((pmic_i2c_reg_t)reg) {
             case I2cRegSchdPeriodic0:
                 buf_u16 = dev_get_periodic_ticks(schd_dev);
                 break;
@@ -113,7 +114,7 @@ uint8_t i2c_slave_regs_read(uint8_t reg)
     case I2cRegWdtTick0:
     case I2cRegShtLastMeasurement0:
     case I2cRegShtReadMeasurementLog0:
-        switch (reg) {
+        switch ((pmic_i2c_reg_t)reg) {
             case I2cRegSchdNextTick0:
                 buf_u32 = dev_get_next_tick(schd_dev);
                 break;
@@ -155,13 +156,17 @@ uint8_t i2c_slave_regs_read(uint8_t reg)
 
 void i2c_slave_regs_write(uint8_t reg, uint8_t val)
 {
-    switch (reg) {
+    switch ((pmic_i2c_reg_t)reg) {
     case I2cRegState:
         dev_pwr_req(DevAux, val & 1);
         dev_pwr_req(DevEsp, val & 2);
         break;
     case I2cRegBootMode:
-        eeprom_update_byte(&eeprom_data->boot_mode, val);
+        eeprom_cache.boot_mode = val;
+        break;
+    case I2cRegStoreConfig:
+        if (val != 0)
+            eeprom_update();
         break;
 
     case I2cRegSchdDev:
@@ -180,7 +185,7 @@ void i2c_slave_regs_write(uint8_t reg, uint8_t val)
     case I2cRegSchdTimeout0:
     case I2cRegSchdTimeout1:
         buf_u16 = (buf_u16 >> 8) | ((uint32_t)val << 8);
-        switch (reg) {
+        switch ((pmic_i2c_reg_t)reg) {
         case I2cRegSchdPeriodic1:
             dev_set_periodic_ticks(schd_dev, buf_u16);
             break;

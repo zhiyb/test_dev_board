@@ -15,4 +15,7 @@ typedef struct {
 } eeprom_data_t;
 #pragma pack(pop)
 
-static eeprom_data_t * const eeprom_data = (eeprom_data_t *)0;
+extern eeprom_data_t eeprom_cache;
+
+void eeprom_init(void);
+void eeprom_update(void);
