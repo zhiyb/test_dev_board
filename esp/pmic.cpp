@@ -183,10 +183,6 @@ void pmic_update(NTPClient &ntpClient, PubSubClient &mqttClient, const char *id)
             sprintf(topic, "var/%s/ref_wdt_tick", id);
             rec_valid &= mqtt_get(mqttClient, topic, &ref_wdt_tick, sizeof(ref_wdt_tick)) == sizeof(ref_wdt_tick);
         }
-        if (rec_valid) {
-            sprintf(topic, "var/%s/wdt_cal_weight", id);
-            rec_valid &= mqtt_get(mqttClient, topic, &wdt_cal_weight, sizeof(wdt_cal_weight)) == sizeof(wdt_cal_weight);
-        }
 
         // Previous calibration results may be valid anyway
         bool prev_cal_valid = true;
@@ -201,6 +197,10 @@ void pmic_update(NTPClient &ntpClient, PubSubClient &mqttClient, const char *id)
         if (prev_cal_valid) {
             sprintf(topic, "var/%s/wdt_cal_max", id);
             prev_cal_valid &= mqtt_get(mqttClient, topic, &wdt_cal_max, sizeof(wdt_cal_max)) == sizeof(wdt_cal_max);
+        }
+        if (prev_cal_valid) {
+            sprintf(topic, "var/%s/wdt_cal_weight", id);
+            prev_cal_valid &= mqtt_get(mqttClient, topic, &wdt_cal_weight, sizeof(wdt_cal_weight)) == sizeof(wdt_cal_weight);
         }
         rec_valid &= prev_cal_valid;
         if (!prev_cal_valid) {
