@@ -40,6 +40,8 @@ uint32_t mqtt_get(PubSubClient &mqttClient, const char *topic, void *data, uint3
 
 void setup()
 {
+    WiFi.persistent(true);
+
     Serial.begin(115200);
     Serial.println();
     Serial.printf("ESP8266: %#010x, Flash: %#010x %uMiB\n",
@@ -49,7 +51,7 @@ void setup()
 
     // Workaround for WiFI error: pll_cal exceeds 2ms
     delay(5);
-    //WiFi.mode(WIFI_STA);
+    WiFi.mode(WIFI_STA);
     WiFiMulti.addAP(WIFI_SSID, WIFI_PASSWORD);
 
     // http_init();
@@ -147,7 +149,7 @@ void loop()
 #endif
 
     // Done
-    WiFi.disconnect();
+    WiFi.disconnect(false, false);
 #if 0
     if (epd_func)
         epd_func->wait();
