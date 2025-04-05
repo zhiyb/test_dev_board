@@ -43,12 +43,6 @@ static inline void adc_disable(void)
     power_adc_disable();
 }
 
-static inline void adc_cal(void)
-{
-    // Convert from calibrated VBG to Vcc
-    adc_val[AdcChVcc] = (uint32_t)eeprom_read_word(&eeprom_data->adc_vbg) * 1024 / adc_val[AdcChVcc];
-}
-
 static void adc_next(void)
 {
     int16_t delta;
@@ -77,7 +71,6 @@ static void adc_next(void)
             adc_start_vcc();
         } else {
             adc_disable();
-            adc_cal();
             adc_state = AdcIdle;
         }
         break;

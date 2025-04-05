@@ -5,10 +5,13 @@
 
 #pragma pack(push, 1)
 typedef struct {
-    uint16_t esp_timeout_sec;
-    uint16_t pico_timeout_sec;
-    uint16_t adc_vbg;
     uint8_t boot_mode;
+    uint16_t aux_periodic_ticks;
+    uint16_t aux_timeout_ticks;
+    uint16_t esp_periodic_ticks;
+    uint16_t esp_timeout_ticks;
+    uint16_t sht_periodic_ticks;
+    uint16_t sht_timeout_ticks;
 } eeprom_data_t;
 #pragma pack(pop)
 

@@ -33,6 +33,7 @@ void init()
     adc_start();
     key_init();
     wdt_init();
+    dev_init();
 
     sei();
 }
@@ -40,13 +41,6 @@ void init()
 int main()
 {
     init();
-    sht_trigger_update();
-
-    uint8_t boot_mode = eeprom_read_byte(&eeprom_data->boot_mode);
-    if (boot_mode & 1)
-        dev_pwr_req(DevAux, true);
-    if (boot_mode & 2)
-        dev_pwr_req(DevEsp, true);
 
     for (;;) {
         if (stack_magic != STACK_MAGIC) {

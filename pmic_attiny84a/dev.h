@@ -19,6 +19,8 @@ typedef enum : uint8_t {
     NumDevs,
 } dev_t;
 
+void dev_init(void);
+
 void dev_pwr_req(dev_t dev, bool en);
 uint8_t dev_pwr_state(void);
 
@@ -26,4 +28,12 @@ bool dev_pwr_req_pending(void);
 void dev_pwr_req_proc(void);
 
 void dev_wdt_irq(uint32_t tick);
-void dev_schedule_sec(dev_t dev, uint32_t sec);
+
+uint16_t dev_get_timeout_ticks(dev_t dev);
+void dev_set_timeout_ticks(dev_t dev, uint16_t ticks);
+uint16_t dev_get_periodic_ticks(dev_t dev);
+void dev_set_periodic_ticks(dev_t dev, uint16_t ticks);
+uint32_t dev_get_next_tick(dev_t dev);
+void dev_set_next_tick(dev_t dev, uint32_t tick);
+bool dev_get_scheduled(dev_t dev);
+void dev_set_scheduled(dev_t dev, bool schd);

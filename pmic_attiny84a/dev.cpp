@@ -9,13 +9,9 @@
 #include "eeprom.h"
 #include "sht.h"
 
-// Automatically restart a device after some time if it was timed out
-static const uint32_t timeout_reschedule_sec = 60 * 60;
-
 static volatile struct {
-    uint32_t schedule_ticks;
-    uint32_t start_tick;
-    uint32_t enable_tick;
+    uint32_t pwr_tick;
+    uint32_t next_tick;
     bool scheduled;
 } devs[NumDevs];
 
@@ -41,8 +37,8 @@ static inline void dev_pwr_enable(dev_t dev)
             i2c_slave_init();
     }
 
-    // Record device enabled time
-    devs[dev].enable_tick = wdt_tick();
+    // Record when device power changed state
+    devs[dev].pwr_tick = wdt_tick();
 
     switch (dev) {
     case DevAux:
@@ -153,46 +149,119 @@ uint8_t dev_pwr_state(void)
     return enabled;
 }
 
-void dev_wdt_irq(uint32_t tick)
+uint16_t dev_get_timeout_ticks(dev_t dev)
 {
-    sht_trigger_update();
+    uint16_t *p = 0;
+    if (dev == DevAux)
+        p = &eeprom_data->aux_timeout_ticks;
+    else if (dev == DevEsp)
+        p = &eeprom_data->esp_timeout_ticks;
+    else if (dev == DevSHT)
+        p = &eeprom_data->sht_timeout_ticks;
+    return p ? eeprom_read_word(p) : 0;
+}
 
-    for (dev_t dev = (dev_t)0; dev < NumDevs; dev = (dev_t)(dev + 1)) {
-        if (!devs[dev].scheduled)
-            continue;
+void dev_set_timeout_ticks(dev_t dev, uint16_t ticks)
+{
+    uint16_t *p = 0;
+    if (dev == DevAux)
+        p = &eeprom_data->aux_timeout_ticks;
+    else if (dev == DevEsp)
+        p = &eeprom_data->esp_timeout_ticks;
+    else if (dev == DevSHT)
+        p = &eeprom_data->sht_timeout_ticks;
+    if (p)
+        eeprom_write_word(p, ticks);
+}
 
-        if (enabled & _BV(dev)) {
-            // Device enabled, check for turn-off timeout
-            uint16_t *p = 0;
-            if (dev == DevAux)
-                p = &eeprom_data->pico_timeout_sec;
-            else if (dev == DevEsp)
-                p = &eeprom_data->esp_timeout_sec;
-            uint16_t timeout_sec = eeprom_read_word(p);
-            uint32_t timeout_ticks = wdt_sec_to_ticks(timeout_sec);
-            uint32_t delta = tick - devs[dev].enable_tick;
-            if (delta >= timeout_ticks) {
-                // Timed out, reschedule after some time
-                dev_pwr_req(dev, false);
-                devs[dev].schedule_ticks = wdt_sec_to_ticks(timeout_reschedule_sec);
-                devs[dev].scheduled = true;
-            }
+uint16_t dev_get_periodic_ticks(dev_t dev)
+{
+    uint16_t *p = 0;
+    if (dev == DevAux)
+        p = &eeprom_data->aux_periodic_ticks;
+    else if (dev == DevEsp)
+        p = &eeprom_data->esp_periodic_ticks;
+    else if (dev == DevSHT)
+        p = &eeprom_data->sht_periodic_ticks;
+    return p ? eeprom_read_word(p) : 0;
+}
 
-        } else {
-            // Device not enabled, check for scheduled turn-on time
-            uint32_t delta = tick - devs[dev].start_tick;
-            if (delta >= devs[dev].schedule_ticks) {
-                devs[dev].scheduled = false;
-                dev_pwr_req(dev, true);
-            }
-        }
+void dev_set_periodic_ticks(dev_t dev, uint16_t ticks)
+{
+    uint16_t *p = 0;
+    if (dev == DevAux)
+        p = &eeprom_data->aux_periodic_ticks;
+    else if (dev == DevEsp)
+        p = &eeprom_data->esp_periodic_ticks;
+    else if (dev == DevSHT)
+        p = &eeprom_data->sht_periodic_ticks;
+    if (p)
+        eeprom_write_word(p, ticks);
+}
+
+uint32_t dev_get_next_tick(dev_t dev)
+{
+    return devs[dev].next_tick;
+}
+
+void dev_set_next_tick(dev_t dev, uint32_t tick)
+{
+    devs[dev].next_tick = tick;
+    devs[dev].scheduled = true;
+}
+
+bool dev_get_scheduled(dev_t dev)
+{
+    return devs[dev].scheduled;
+}
+
+void dev_set_scheduled(dev_t dev, bool schd)
+{
+    devs[dev].scheduled = schd;
+}
+
+void dev_init(void)
+{
+    uint32_t tick = wdt_tick();
+
+    // Check scheduling info in EEPROM config
+    uint8_t boot_mode = eeprom_read_byte(&eeprom_data->boot_mode);
+    for (uint8_t dev = 0; dev < NumDevs; dev++) {
+        if (boot_mode & _BV(dev))
+            dev_pwr_req((dev_t)dev, true);
+
+        // Check if device is scheduled for turning on
+        uint16_t ticks = dev_get_periodic_ticks((dev_t)dev);
+        devs[dev].next_tick = tick + ticks;
+        devs[dev].scheduled = ticks != 0;
     }
 }
 
-void dev_schedule_sec(dev_t dev, uint32_t sec)
+void dev_wdt_irq(uint32_t tick)
 {
-    devs[dev].scheduled = false;
-    devs[dev].start_tick = wdt_tick();
-    devs[dev].schedule_ticks = wdt_sec_to_ticks(sec);
-    devs[dev].scheduled = true;
+    for (uint8_t dev = 0; dev < NumDevs; dev++) {
+        if (enabled & _BV(dev)) {
+            // Device enabled, check for turn-off timeout
+            uint16_t ticks = dev_get_timeout_ticks((dev_t)dev);
+            if (ticks != 0) {
+                uint32_t delta = tick - devs[dev].pwr_tick;
+                if (delta >= ticks) {
+                    // Timed out, turn off
+                    dev_pwr_req((dev_t)dev, false);
+                }
+            }
+
+        } else if (devs[dev].scheduled) {
+            // Device not enabled, but scheduled for turning on
+            int32_t delta = tick - devs[dev].next_tick;
+            if (delta >= 0) {
+                // Turn-on tick reached
+                dev_pwr_req((dev_t)dev, true);
+                // Check for next periodic turn-on schedule
+                uint16_t ticks = dev_get_periodic_ticks((dev_t)dev);
+                devs[dev].next_tick = tick + ticks;
+                devs[dev].scheduled = ticks != 0;
+            }
+        }
+    }
 }

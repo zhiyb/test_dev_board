@@ -12,29 +12,27 @@ typedef enum {
     I2cRegState,
     I2cRegBootMode,
 
-    I2cRegAdcTemp0,
-    I2cRegAdcTemp1,
-    I2cRegAdcVbg0,
-    I2cRegAdcVbg1,
-
-    I2cRegEspTimeoutSec0,
-    I2cRegEspTimeoutSec1,
-    I2cRegPicoTimeoutSec0,
-    I2cRegPicoTimeoutSec1,
-    I2cRegEspScheduleSec0,          // u32
-    I2cRegEspScheduleSec1,
-    I2cRegEspScheduleSec2,
-    I2cRegEspScheduleSec3,
-    I2cRegPicoScheduleSec0,         // u32
-    I2cRegPicoScheduleSec1,
-    I2cRegPicoScheduleSec2,
-    I2cRegPicoScheduleSec3,
+    I2cRegSchdDev,                  // Select a dev for configuration
+    I2cRegSchdScheduled,
+    I2cRegSchdPeriodic0,            // u16
+    I2cRegSchdPeriodic1,
+    I2cRegSchdTimeout0,             // u16
+    I2cRegSchdTimeout1,
+    I2cRegSchdNextTick0,            // u32
+    I2cRegSchdNextTick1,
+    I2cRegSchdNextTick2,
+    I2cRegSchdNextTick3,
 
     I2cRegWdtScratch,
     I2cRegWdtTick0,                 // u32
     I2cRegWdtTick1,
     I2cRegWdtTick2,
     I2cRegWdtTick3,
+
+    I2cRegAdcTemp0,                 // u16
+    I2cRegAdcTemp1,
+    I2cRegAdcVcc0,                  // u16
+    I2cRegAdcVcc1,
 
     I2cRegShtLastMeasurement0,      // u16 T
     I2cRegShtLastMeasurement1,
@@ -54,6 +52,7 @@ typedef enum {
 static uint32_t buf_u32;
 static uint16_t buf_u16;
 static uint8_t wdt_scratch = 0;
+static dev_t schd_dev = (dev_t)0;
 
 uint8_t i2c_slave_regs_read(uint8_t reg)
 {
@@ -67,36 +66,41 @@ uint8_t i2c_slave_regs_read(uint8_t reg)
     case I2cRegBootMode:
         return eeprom_read_byte(&eeprom_data->boot_mode);
 
+    case I2cRegSchdDev:
+        return schd_dev;
+    case I2cRegSchdScheduled:
+        return dev_get_scheduled(schd_dev);
+
     case I2cRegWdtScratch:
         return wdt_scratch;
 
     case I2cRegShtMeasurementLogLength:
         return sht_measurement_log_length();
 
+    case I2cRegSchdPeriodic0:
+    case I2cRegSchdTimeout0:
     case I2cRegAdcTemp0:
-    case I2cRegAdcVbg0:
-    case I2cRegEspTimeoutSec0:
-    case I2cRegPicoTimeoutSec0:
+    case I2cRegAdcVcc0:
         switch (reg) {
+            case I2cRegSchdPeriodic0:
+                buf_u16 = dev_get_periodic_ticks(schd_dev);
+                break;
+            case I2cRegSchdTimeout0:
+                buf_u16 = dev_get_timeout_ticks(schd_dev);
+                break;
+
             case I2cRegAdcTemp0:
                 buf_u16 = adc_result(AdcChTemp);
                 break;
-            case I2cRegAdcVbg0:
+            case I2cRegAdcVcc0:
                 buf_u16 = adc_result(AdcChVcc);
-                break;
-
-            case I2cRegEspTimeoutSec0:
-                buf_u16 = eeprom_read_word(&eeprom_data->esp_timeout_sec);
-                break;
-            case I2cRegPicoTimeoutSec0:
-                buf_u16 = eeprom_read_word(&eeprom_data->pico_timeout_sec);
                 break;
         }
         // fall-through
+    case I2cRegSchdPeriodic1:
+    case I2cRegSchdTimeout1:
     case I2cRegAdcTemp1:
-    case I2cRegAdcVbg1:
-    case I2cRegEspTimeoutSec1:
-    case I2cRegPicoTimeoutSec1:
+    case I2cRegAdcVcc1:
     case I2cRegShtLastMeasurement4:
     case I2cRegShtLastMeasurement5:
     case I2cRegShtReadMeasurementLog4:
@@ -105,10 +109,15 @@ uint8_t i2c_slave_regs_read(uint8_t reg)
         buf_u16 >>= 8;
         return v;
 
+    case I2cRegSchdNextTick0:
     case I2cRegWdtTick0:
     case I2cRegShtLastMeasurement0:
     case I2cRegShtReadMeasurementLog0:
         switch (reg) {
+            case I2cRegSchdNextTick0:
+                buf_u32 = dev_get_next_tick(schd_dev);
+                break;
+
             case I2cRegWdtTick0:
                 buf_u32 = wdt_tick();
                 break;
@@ -125,6 +134,9 @@ uint8_t i2c_slave_regs_read(uint8_t reg)
                 break;
         }
         // fall-through
+    case I2cRegSchdNextTick1:
+    case I2cRegSchdNextTick2:
+    case I2cRegSchdNextTick3:
     case I2cRegWdtTick1:
     case I2cRegWdtTick2:
     case I2cRegWdtTick3:
@@ -152,27 +164,42 @@ void i2c_slave_regs_write(uint8_t reg, uint8_t val)
         eeprom_update_byte(&eeprom_data->boot_mode, val);
         break;
 
-    case I2cRegEspScheduleSec0:
-    case I2cRegEspScheduleSec1:
-    case I2cRegEspScheduleSec2:
-    case I2cRegEspScheduleSec3:
-    case I2cRegPicoScheduleSec0:
-    case I2cRegPicoScheduleSec1:
-    case I2cRegPicoScheduleSec2:
-    case I2cRegPicoScheduleSec3:
-        buf_u32 = (buf_u32 >> 8) | ((uint32_t)val << 24);
-        switch (reg) {
-        case I2cRegPicoScheduleSec3:
-            dev_schedule_sec(DevAux, buf_u32);
-            break;
-        case I2cRegEspScheduleSec3:
-            dev_schedule_sec(DevEsp, buf_u32);
-            break;
-        }
+    case I2cRegSchdDev:
+        schd_dev = (dev_t)(val < NumDevs ? val : 0);
+        break;
+    case I2cRegSchdScheduled:
+        dev_set_scheduled(schd_dev, !!val);
         break;
 
     case I2cRegWdtScratch:
         wdt_scratch = val;
+        break;
+
+    case I2cRegSchdPeriodic0:
+    case I2cRegSchdPeriodic1:
+    case I2cRegSchdTimeout0:
+    case I2cRegSchdTimeout1:
+        buf_u16 = (buf_u16 >> 8) | ((uint32_t)val << 8);
+        switch (reg) {
+        case I2cRegSchdPeriodic1:
+            dev_set_periodic_ticks(schd_dev, buf_u16);
+            break;
+        case I2cRegSchdTimeout1:
+            dev_set_timeout_ticks(schd_dev, buf_u16);
+            break;
+        }
+        break;
+
+    case I2cRegSchdNextTick0:
+    case I2cRegSchdNextTick1:
+    case I2cRegSchdNextTick2:
+    case I2cRegSchdNextTick3:
+        buf_u32 = (buf_u32 >> 8) | ((uint32_t)val << 24);
+        switch (reg) {
+        case I2cRegSchdNextTick3:
+            dev_set_next_tick(schd_dev, buf_u32);
+            break;
+        }
         break;
     }
 }
