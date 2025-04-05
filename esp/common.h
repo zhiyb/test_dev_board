@@ -2,4 +2,4 @@
 
 #include <PubSubClient.h>
 
-uint32_t mqtt_get(PubSubClient &mqttClient, const char *topic, void *data, uint32_t data_len);
+uint32_t mqtt_get(PubSubClient &mqttClient, const char *topic, void *data, uint32_t data_len, bool str_null = false);

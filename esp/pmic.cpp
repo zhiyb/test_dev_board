@@ -7,10 +7,18 @@
 
 #define I2C_ADDR    ((uint8_t)0x39)
 
-typedef enum {
+typedef enum : uint8_t {
+    DevAux = 0,
+    DevEsp,
+    DevSHT,
+    NumDevs,
+} pmic_dev_t;
+
+typedef enum : uint8_t {
     I2cRegId = 0,
     I2cRegState,
     I2cRegBootMode,
+    I2cRegStoreConfig,
 
     I2cRegSchdDev,                  // Select a dev for configuration
     I2cRegSchdScheduled,
@@ -47,7 +55,7 @@ typedef enum {
     I2cRegShtReadMeasurementLog4,   // u16 WDT tick
     I2cRegShtReadMeasurementLog5,
     I2cRegShtMeasurementLogLength,
-} i2c_reg_t;
+} pmic_i2c_reg_t;
 
 static const unsigned int gpio_sda = 4;
 static const unsigned int gpio_scl = 5;
@@ -376,9 +384,7 @@ void pmic_update(NTPClient &ntpClient, PubSubClient &mqttClient, const char *id)
         // Read calibration value
         char vbg_str[8];
         sprintf(topic, "config/%s/pmic/adc_vbg", id);
-        uint8_t vbg_str_len = mqtt_get(mqttClient, topic, &vbg_str[0], sizeof(vbg_str));
-        vbg_str_len = max(vbg_str_len, (uint8_t)(sizeof(vbg_str) - 1));
-        vbg_str[vbg_str_len] = 0;
+        mqtt_get(mqttClient, topic, &vbg_str[0], sizeof(vbg_str), true);
         float adc_vbg = atof(vbg_str);
 
         uint16_t adc_val[2] = {0};
@@ -497,7 +503,32 @@ void pmic_update(NTPClient &ntpClient, PubSubClient &mqttClient, const char *id)
     }
 #endif
 
-    // TODO Update scheduling info
+    // Update PMIC scheduling info
+    {
+        sprintf(topic, "config/%s/pmic/sht_periodic_secs", id);
+        if (mqtt_get(mqttClient, topic, data, sizeof(data), true)) {
+            uint64_t periodic_secs = atol(data);
+            uint16_t periodic_ticks = (uint64_t)periodic_secs * 1000000 / wdt_cal;
+            pmic_write(I2cRegSchdDev, DevSHT);
+            pmic_write_multi(I2cRegSchdPeriodic0, (uint8_t *)&periodic_ticks, 2);
+
+            uint32_t next_tick = wdt_tick + periodic_ticks;
+            pmic_write_multi(I2cRegSchdNextTick0, (uint8_t *)&next_tick, 4);
+        }
+
+        sprintf(topic, "config/%s/pmic/esp_periodic_secs", id);
+        if (mqtt_get(mqttClient, topic, data, sizeof(data), true)) {
+            uint64_t periodic_secs = atol(data);
+            uint16_t periodic_ticks = (uint64_t)periodic_secs * 1000000 / wdt_cal;
+            pmic_write(I2cRegSchdDev, DevEsp);
+            pmic_write_multi(I2cRegSchdPeriodic0, (uint8_t *)&periodic_ticks, 2);
+
+            uint32_t next_tick = wdt_tick + periodic_ticks;
+            pmic_write_multi(I2cRegSchdNextTick0, (uint8_t *)&next_tick, 4);
+        }
+
+        pmic_write(I2cRegStoreConfig, 1);
+    }
 }
 
 #if 0

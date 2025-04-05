@@ -17,9 +17,9 @@ static NTPClient ntpClient(wifiUDP, NTP_SERVER);
 
 char id[32];
 
-uint32_t mqtt_get(PubSubClient &mqttClient, const char *topic, void *data, uint32_t data_len)
+uint32_t mqtt_get(PubSubClient &mqttClient, const char *topic, void *data, uint32_t data_len, bool str_null)
 {
-    static const uint32_t timeout_sec = 3;
+    static const uint32_t timeout_sec = 2;
 
     static uint32_t recv_len;
     recv_len = 0;
@@ -35,6 +35,12 @@ uint32_t mqtt_get(PubSubClient &mqttClient, const char *topic, void *data, uint3
         mqttClient.loop();
     mqttClient.unsubscribe(topic);
     mqttClient.setCallback(nullptr);
+
+    if (str_null) {
+        // Add string null terminator
+        uint32_t len = std::max(recv_len, data_len - 1);
+        ((char *)data)[len] = 0;
+    }
     return recv_len;
 }
 
