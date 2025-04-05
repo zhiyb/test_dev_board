@@ -13,6 +13,7 @@
 #define CMD_MEASURE_MEDIUM_PRECISION    0xf6
 #define CMD_MEASURE_LOW_PRECISION       0xe0
 #define CMD_SERIAL_NUMBER               0x89
+#define CMD_SOFT_RESET                  0x94
 
 static enum : uint8_t {
     StateIdle,
@@ -41,7 +42,7 @@ void sht_powered_on(void)
 
 void sht_timer_irq(void)
 {
-    uint8_t cmd = CMD_MEASURE_HIGH_PRECISION;
+    uint8_t cmd;
     uint8_t buf[6];
 
     switch (state) {
@@ -49,6 +50,7 @@ void sht_timer_irq(void)
         // Power on wait complete
         i2c_master_init_resync();
         // Measure T & RH with high precision
+        cmd = CMD_MEASURE_HIGH_PRECISION;
         if (!i2c_master_write(I2C_ADDR, &cmd, 1)) {
             // Sensor didn't ACK, shutdown
             break;

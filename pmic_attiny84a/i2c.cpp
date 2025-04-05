@@ -124,14 +124,14 @@ void i2c_master_init_resync(void)
     for (uint8_t i = 0; i < 10; i++) {
         // SCL to low
         USICR |= _BV(USITC);
-        I2C_DELAY(-1);
+        // Clear flags and bit counter
+        USISR = usisr_mask;
+        I2C_DELAY(-2);
         // SCL to high
         USICR |= _BV(USITC);
         // Wait for SCL to raise
         while (!(I2C_PIN & I2C_SCL));
-        I2C_DELAY(-3);
-        // Clear flags and bit counter
-        USISR = usisr_mask;
+        I2C_DELAY(-2);
     }
 
     // Send stop condition
@@ -142,6 +142,8 @@ void i2c_master_init_resync(void)
     // Switch SDA to input mode with pull-up
     I2C_PORT |= I2C_SDA;
     I2C_DDR &= ~I2C_SDA;
+    // Clear flags and bit counter
+    USISR = usisr_mask;
     // Wait for SDA to raise
     while (!(I2C_PIN & I2C_SDA));
     I2C_DELAY(-1);
