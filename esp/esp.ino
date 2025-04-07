@@ -1,13 +1,11 @@
 #include <ESP8266WiFi.h>
 #include <ESP8266WiFiMulti.h>
-#include <PubSubClient.h>
 #include <NTPClient.h>
 #include <WiFiUdp.h>
 #include "wifi_network.h"
-#include "http.h"
 #include "epd.h"
 #include "pmic.h"
-#include "common.h"
+#include "mqtt.h"
 
 static ESP8266WiFiMulti WiFiMulti;
 static WiFiClient wifiClient;
@@ -16,33 +14,6 @@ static PubSubClient mqttClient(wifiClient);
 static NTPClient ntpClient(wifiUDP, NTP_SERVER);
 
 char id[32];
-
-uint32_t mqtt_get(PubSubClient &mqttClient, const char *topic, void *data, uint32_t data_len, bool str_null)
-{
-    static const uint32_t timeout_sec = 2;
-
-    static uint32_t recv_len;
-    recv_len = 0;
-    mqttClient.setCallback([data, data_len](const char *topic, const uint8_t *pld, unsigned int pld_len) {
-        uint32_t len = std::min(pld_len, data_len);
-        memcpy(data, pld, len);
-        recv_len = len;
-    });
-
-    mqttClient.subscribe(topic, 1);
-    uint32_t ms = millis();
-    while (!recv_len && (uint32_t)(millis() - ms) < timeout_sec * 1000)
-        mqttClient.loop();
-    mqttClient.unsubscribe(topic);
-    mqttClient.setCallback(nullptr);
-
-    if (str_null) {
-        // Add string null terminator
-        uint32_t len = std::max(recv_len, data_len - 1);
-        ((char *)data)[len] = 0;
-    }
-    return recv_len;
-}
 
 void setup()
 {
@@ -59,9 +30,6 @@ void setup()
     delay(5);
     WiFi.mode(WIFI_STA);
     WiFiMulti.addAP(WIFI_SSID, WIFI_PASSWORD);
-
-    // http_init();
-    // epd_init();
 }
 
 void loop()
@@ -86,81 +54,125 @@ void loop()
         Serial.println(WiFi.localIP());
     }
 
+    enum {TypeUnknown, TypeSensor, TypeEPD} type = TypeUnknown;
+    const epd_func_t *epd_func = nullptr;
+
     // Connect to MQTT server
+    mqttClient.setBufferSize(MQTT_MAX_PACKET_SIZE);
     mqttClient.setServer(MQTT_SERVER, MQTT_PORT);
-    if (mqttClient.connect(id, MQTT_USER, MQTT_PASSWORD)) {
-        // Connected
+    if (!mqttClient.connect(id, MQTT_USER, MQTT_PASSWORD)) {
+        // Connection failed, shutdown
         pmic_init();
-        pmic_update(ntpClient, mqttClient, id);
-        mqttClient.disconnect();
+        goto shutdown;
     }
 
-#if 0
-    char url[128];
-
-    // Get scheduling info
-    int outdated = 1;
-    sprintf(url, "%s?token=%s&action=next", url_base, id);
-    const String &next = http_get(url, nullptr);
-    outdated = next.indexOf("\"outdated\":");
-    outdated = outdated < 0 || next[outdated + 11] != 'f';
-
-    // If key is pressed, force display refresh
-    if (!outdated) {
+    // NTP update once after boot
+    if (!ntpClient.update()) {
         pmic_init();
-        if (pmic_get_key()) {
-            outdated = 1;
-            // Need to re-init EPD GPIOs
+        goto shutdown;
+    }
+
+    // Check module type
+    sprintf(mqtt_buf_topic, "config/%s/type", id);
+    if (!mqtt_get(mqttClient, mqtt_buf_topic, mqtt_buf_data, sizeof(mqtt_buf_data), true)) {
+        type = TypeUnknown;
+        mqttClient.publish(mqtt_buf_topic, "unknown", true);
+    } else if (strcmp(mqtt_buf_data, "sensor") == 0) {
+        type = TypeSensor;
+    } else if (strcmp(mqtt_buf_data, "epd") == 0) {
+        type = TypeEPD;
+    }
+
+    if (type == TypeEPD) {
+        // Check if display is outdated
+        bool upd_req = true;
+        if (upd_req) {
+            sprintf(mqtt_buf_topic, "epd/%s/disp_ts", id);
+            upd_req &= mqtt_get(mqttClient, mqtt_buf_topic, mqtt_buf_data, sizeof(mqtt_buf_data), true) != 0;
+        }
+        uint32_t disp_ts;
+        if (upd_req) {
+            disp_ts = strtoul(mqtt_buf_data, nullptr, 0);
+        }
+        if (upd_req) {
+            sprintf(mqtt_buf_topic, "epd/%s/data_ts", id);
+            upd_req &= mqtt_get(mqttClient, mqtt_buf_topic, mqtt_buf_data, sizeof(mqtt_buf_data), true) != 0;
+        }
+        uint32_t data_ts;
+        if (upd_req) {
+            data_ts = strtoul(mqtt_buf_data, nullptr, 0);
+            upd_req &= disp_ts != data_ts;
+        }
+
+        if (!upd_req) {
+            // It's not time for display update yet
+            // Check if key is being pressed, force display refresh
+            pmic_init();
+            upd_req |= !!pmic_get_key();
+        }
+
+        if (upd_req) {
+            // Display update needed, read EPD type
+            sprintf(mqtt_buf_topic, "epd/%s/type", id);
+            upd_req &= mqtt_get(mqttClient, mqtt_buf_topic, mqtt_buf_data, sizeof(mqtt_buf_data), true) != 0;
+        }
+        if (upd_req) {
+            // Check EPD type
+            if (strcmp(mqtt_buf_data, "epd_2in13_rwb_122x250") == 0)
+                epd_func = epd_2in13_rwb_122x250();
+            else if (strcmp(mqtt_buf_data, "epd_4in2_rwb_400x300") == 0)
+                epd_func = epd_4in2_rwb_400x300();
+            else if (strcmp(mqtt_buf_data, "epd_5in65_7c_600x448") == 0)
+                epd_func = epd_5in65_7c_600x448();
+            else if (strcmp(mqtt_buf_data, "epd_7in5_rwb4_640x384") == 0)
+                epd_func = epd_7in5_rwb4_640x384();
+            upd_req &= epd_func != nullptr;
+        }
+
+        if (upd_req) {
+            // Check numebr of EPD data segments
+            sprintf(mqtt_buf_topic, "epd/%s/data/count", id);
+            upd_req &= mqtt_get(mqttClient, mqtt_buf_topic, mqtt_buf_data, sizeof(mqtt_buf_data), true) != 0;
+        }
+        if (upd_req) {
+            // Initialise EPD interface
+            // Note: This conflicts with PMIC I2C communication
             epd_init();
+            epd_func->init();
+
+            // Read EPD display data
+            uint32_t data_count = strtoul(mqtt_buf_data, nullptr, 0);
+            uint32_t ofs = 0;
+            for (uint32_t i = 0; i < data_count; i++) {
+                sprintf(mqtt_buf_topic, "epd/%s/data/%lu", id, i);
+                uint32_t len = mqtt_get(mqttClient, mqtt_buf_topic, mqtt_buf_data, sizeof(mqtt_buf_data), false);
+                epd_func->update((uint8_t *)mqtt_buf_data, ofs, len);
+                ofs += len;
+            }
+
+            // EPD now refreshing, we have time to process other things
+
+            // Update disp_ts to match data_ts
+            sprintf(mqtt_buf_topic, "epd/%s/disp_ts", id);
+            sprintf(mqtt_buf_data, "%lu", data_ts);
+            mqttClient.publish(mqtt_buf_topic, mqtt_buf_data, true);
         }
     }
 
-    // Get display type
-    const epd_func_t *epd_func = 0;
-    if (outdated) {
-        sprintf(url, "%s?token=%s&action=peek&key=type", url_base, id);
-        const String &stype = http_get(url, nullptr);
-        Serial.print("EPD: ");
-        Serial.println(stype);
-        if (stype.startsWith("epd_2in13_rwb_122x250"))
-            epd_func = epd_2in13_rwb_122x250();
-        else if (stype.startsWith("epd_4in2_rwb_400x300"))
-            epd_func = epd_4in2_rwb_400x300();
-        else if (stype.startsWith("epd_5in65_7c_600x448"))
-            epd_func = epd_5in65_7c_600x448();
-        else if (stype.startsWith("epd_7in5_rwb4_640x384"))
-            epd_func = epd_7in5_rwb4_640x384();
-    }
-
-    // Refresh display
-    if (epd_func) {
-        epd_func->init();
-        static const uint32_t block = 1024 * 4;
-        uint32_t ofs = 0;
-        uint32_t len = 0;
-        do {
-            len = block;
-            sprintf(url, "%s?token=%s&action=read&ofs=%u&len=%u",
-                url_base, id, ofs, len);
-            const String &data = http_get(url, nullptr);
-            len = data.length();
-            epd_func->update((const uint8_t *)data.c_str(), ofs, len);
-            ofs += len;
-        } while(len == block);
-    }
-
-    // Configure PMIC for next wakeup
+    // Update PMIC sensors
     pmic_init();
-    // pmic_update();
-#endif
+    pmic_update(ntpClient, mqttClient, id);
 
+shutdown:
     // Done
+    mqttClient.disconnect();
     WiFi.disconnect(false, false);
-#if 0
-    if (epd_func)
+    wifi_set_opmode_current(WIFI_OFF);
+
+    if (epd_func) {
         epd_func->wait();
-#endif
-    epd_deinit();
+        epd_deinit();
+    }
 
     // Boot mode
     // b0: GPIO02   should be 1

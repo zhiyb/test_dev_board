@@ -1,7 +1,7 @@
 #pragma once
 
-#include <PubSubClient.h>
 #include <NTPClient.h>
+#include "mqtt.h"
 
 void pmic_init(void);
 // void pmic_update(void);
