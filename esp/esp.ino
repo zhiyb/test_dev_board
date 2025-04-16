@@ -72,6 +72,10 @@ void loop()
         goto shutdown;
     }
 
+    sprintf(mqtt_buf_topic, "debug/%s/power_on_ts", id);
+    sprintf(mqtt_buf_data, "%lu", ntpClient.getEpochTime());
+    mqttClient.publish(mqtt_buf_topic, mqtt_buf_data);
+
     // Check module type
     sprintf(mqtt_buf_topic, "config/%s/type", id);
     if (!mqtt_get(mqttClient, mqtt_buf_topic, mqtt_buf_data, sizeof(mqtt_buf_data), true)) {
@@ -165,6 +169,10 @@ void loop()
 
 shutdown:
     // Done
+    sprintf(mqtt_buf_topic, "debug/%s/power_off_ts", id);
+    sprintf(mqtt_buf_data, "%lu", ntpClient.getEpochTime());
+    mqttClient.publish(mqtt_buf_topic, mqtt_buf_data);
+
     mqttClient.disconnect();
     WiFi.disconnect(false, false);
     wifi_set_opmode_current(WIFI_OFF);
