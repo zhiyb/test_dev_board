@@ -26,8 +26,10 @@ static inline void dev_pwr_enable(dev_t dev)
 
     // Enable 3v3 and I2C peripheral first if any devices are being enabled
     if (!prev_enabled) {
-        // Trigger ADC conversions too
-        adc_start();
+        if (dev != DevSHT) {
+            // Trigger ADC conversions too
+            adc_start();
+        }
         // Enable 3v3
         PORTA |= _BV(3);
         // Initialise I2C interface
